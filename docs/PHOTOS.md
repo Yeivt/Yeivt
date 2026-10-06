@@ -4,7 +4,7 @@ Las fotografías deben descargarse de fuentes con licencia que permita publicar 
 
 La selección actual incluye **11 fotografías reales de Wikimedia Commons**: siete imágenes devocionales para las oraciones y cuatro de los santuarios. Se sirven desde el propio sitio en 33 versiones WebP de 480, 800 y 1200 píxeles, sin ampliar los originales. `src/content/photos.json` conserva para cada foto el autor, la licencia, la fuente, la URL original y un texto alternativo que identifica el motivo. Las ilustraciones propias permanecen como respaldo si falta una fotografía.
 
-La imagen principal de Luján es una réplica fotografiada por Photo-Monique; no se presenta como la imagen original de la basílica. La Medalla Milagrosa está representada por una estatua en Columbus, Ohio, fotografiada por Nheyob. Las imágenes de Lourdes muestran la gruta de Massabielle. Las de Fátima conservan las identificaciones de sus páginas de origen. Las fotografías de templos corresponden a Luján, la capilla de la rue du Bac en París, Lourdes y Fátima.
+La imagen principal de Luján muestra la imagen de la iglesia de Nuestra Señora de Pompeya, fotografiada por Rodrigo Fernández (CC BY-SA 4.0). La fotografía de la réplica realizada por Photo-Monique permanece en la primera oración y en la galería; ninguna se presenta como la imagen original de la basílica. La Medalla Milagrosa está representada por una estatua en Columbus, Ohio, fotografiada por Nheyob. Las imágenes de Lourdes muestran la gruta de Massabielle. Las de Fátima conservan las identificaciones de sus páginas de origen. Las fotografías de templos corresponden a Luján, la capilla de la rue du Bac en París, Lourdes y Fátima.
 
 Los textos breves de los santuarios están en `src/content/site.ts`, junto con sus direcciones y enlaces oficiales. Describen su ubicación, devoción y espacios de oración; los horarios se consultan en el sitio de cada santuario.
 
@@ -32,11 +32,11 @@ IDs disponibles:
 
 | ID | Imagen |
 | --- | --- |
-| `virgen-lujan` | Virgen de Luján, inicio/primera oración/galería |
+| `virgen-lujan` | Virgen de Luján, primera oración/galería |
 | `virgen-milagrosa` | Medalla Milagrosa |
 | `virgen-lourdes` | Lourdes |
 | `virgen-fatima` | Fátima |
-| `virgen-lujan-2` | Segunda fotografía de Luján, quinta oración |
+| `virgen-lujan-2` | Fotografía de Luján, imagen principal del inicio/quinta oración |
 | `virgen-lourdes-2` | Segunda fotografía de Lourdes, sexta oración |
 | `virgen-fatima-2` | Segunda fotografía de Fátima, séptima oración |
 | `templo-lujan` | Basílica de Nuestra Señora de Luján |
