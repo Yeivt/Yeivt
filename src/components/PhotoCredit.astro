@@ -1,0 +1,6 @@
+---
+import { getPhoto } from '../lib/photos';
+const { id } = Astro.props;
+const photo = getPhoto(id);
+---
+{photo ? <small class="photo-credit"><a href={photo.sourceUrl} target="_blank" rel="noopener noreferrer">Foto: {photo.author}</a> · <a href={photo.licenseUrl} target="_blank" rel="noopener noreferrer">{photo.license}</a><span> · Tamaño adaptado para la web.</span></small> : <small class="photo-credit">Ilustración provisional · Fotografía pendiente de descarga.</small>}

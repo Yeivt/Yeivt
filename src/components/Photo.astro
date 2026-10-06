@@ -1,0 +1,25 @@
+---
+import { getPhoto } from '../lib/photos';
+interface Props {
+  id: string;
+  fallback: string;
+  alt: string;
+  sizes?: string;
+  loading?: 'eager' | 'lazy';
+  priority?: boolean;
+}
+const { id, fallback, alt, sizes = '(max-width: 650px) 90vw, 550px', loading = 'lazy', priority = false } = Astro.props;
+const photo = getPhoto(id);
+---
+<img
+  src={photo?.src || fallback}
+  srcset={photo?.variants.map(variant => `${variant.src} ${variant.width}w`).join(', ')}
+  sizes={photo ? sizes : undefined}
+  width={photo?.width || 600}
+  height={photo?.height || 750}
+  alt={photo ? alt : `Ilustración provisional; fotografía pendiente: ${alt}`}
+  loading={loading}
+  fetchpriority={priority ? 'high' : 'auto'}
+  data-photo-id={id}
+  data-photo-ready={photo ? 'true' : 'false'}
+/>

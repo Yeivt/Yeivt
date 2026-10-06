@@ -10,7 +10,7 @@ El menú conserva exactamente nueve opciones, conforme a lo acordado: siete orac
 
 Se incluyeron Ave María, Salve, Rosario y Ángelus mencionados en el documento. Para completar siete se propusieron Bajo tu amparo, Acuérdate y Magníficat; se pueden reemplazar sin modificar la lógica del sistema. Todas requieren revisión pastoral y editorial.
 
-Las imágenes originales todavía no fueron aportadas. Las ilustraciones propias de ejemplo están identificadas como provisionales. La galería reserva los cuatro títulos indicados: Luján, Medalla Milagrosa, Lourdes y Fátima. No hay direcciones de templos inventadas.
+La galería reserva los cuatro títulos indicados: Luján, Medalla Milagrosa, Lourdes y Fátima. La lista de templos contiene sus cuatro santuarios con mapas y sitios. Las fotografías se importan con fuente y licencia mediante `scripts/photos.mjs`; su descarga está pendiente porque Wikimedia permanece bloqueado en la red actual. Mientras tanto hay ilustraciones identificadas como provisionales. Los títulos y textos utilizan Inter alojada localmente, sin trazos finos ni cursiva.
 
 ## Intenciones y privacidad
 

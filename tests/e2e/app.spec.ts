@@ -79,4 +79,15 @@ test('prayers work offline and private pages and submissions stay outside the PW
     return paths;
   });
   expect(cachedPaths.some(path => path.startsWith('/sacerdotes') || path.startsWith('/admin') || path.includes('/functions/'))).toBe(false);
+  expect(cachedPaths.some(path => path.endsWith('.woff2'))).toBe(true);
+});
+
+test('the Marian temples list has four places and usable map links', async ({ page }) => {
+  await page.goto('/templos/');
+  await expect(page.locator('.temple-card')).toHaveCount(4);
+  await expect(page.getByRole('heading', { name: 'Basílica de Nuestra Señora de Luján' })).toBeVisible();
+  for (const link of await page.getByRole('link', { name: 'Ver en el mapa' }).all()) {
+    expect(await link.getAttribute('href')).toMatch(/^https:\/\/www\.google\.com\/maps\/search\//);
+  }
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
 });

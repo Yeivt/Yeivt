@@ -1,4 +1,4 @@
-// Contenido provisional: revisar advocación, textos e imágenes antes de publicar.
+// Revisar textos pastorales antes de publicar. Fotografías en photos.json.
 export const site = {
   name: 'Misterio',
   description: 'Un espacio para rezar, encontrar esperanza y confiar tus intenciones a una comunidad de oración.',
@@ -13,9 +13,18 @@ export const prayers = [
   { slug: 'bajo-tu-amparo', title: 'Bajo tu amparo', subtitle: 'Confiar nuestro camino', text: 'Bajo tu amparo nos acogemos, Santa Madre de Dios; no desprecies las súplicas que te dirigimos en nuestras necesidades; antes bien, líbranos de todo peligro, ¡oh Virgen gloriosa y bendita! Amén.' },
   { slug: 'acuerdate', title: 'Acuérdate', subtitle: 'Acercarnos con esperanza', text: 'Acuérdate, ¡oh piadosísima Virgen María!, que jamás se ha oído decir que ninguno de los que han acudido a tu protección, implorando tu asistencia y reclamando tu socorro, haya sido abandonado por ti.\n\nAnimado con esta confianza, a ti también acudo, oh Madre, Virgen de las vírgenes; y, aunque gimiendo bajo el peso de mis pecados, me atrevo a comparecer ante tu presencia soberana.\n\nOh Madre de Dios, no deseches mis súplicas; antes bien, escúchalas y acógelas benignamente. Amén.' },
   { slug: 'magnificat', title: 'Magníficat', subtitle: 'Una oración de gratitud', text: 'Proclama mi alma la grandeza del Señor, se alegra mi espíritu en Dios, mi salvador; porque ha mirado la humildad de su esclava.\n\nDesde ahora me felicitarán todas las generaciones, porque el Poderoso ha hecho obras grandes por mí: su nombre es santo, y su misericordia llega a sus fieles de generación en generación.\n\nÉl hace proezas con su brazo: dispersa a los soberbios de corazón, derriba del trono a los poderosos y enaltece a los humildes; a los hambrientos los colma de bienes y a los ricos los despide vacíos.\n\nAuxilia a Israel, su siervo, acordándose de la misericordia, como lo había prometido a nuestros padres, en favor de Abrahán y su descendencia por siempre.' },
-].map((prayer, index) => ({ ...prayer, image: `/images/maria-${index + 1}.svg`, number: index + 1 }));
+].map((prayer, index) => ({ ...prayer, image: `/images/maria-${index + 1}.svg`, photoId: ['virgen-lujan', 'virgen-milagrosa', 'virgen-lourdes', 'virgen-fatima', 'virgen-lujan-2', 'virgen-lourdes-2', 'virgen-fatima-2'][index], number: index + 1 }));
 
-export const gallery = ['Virgen de Luján', 'Nuestra Señora de la Medalla Milagrosa', 'Nuestra Señora de Lourdes', 'Nuestra Señora de Fátima'];
+export const gallery = [
+  { name: 'Virgen de Luján', photoId: 'virgen-lujan' },
+  { name: 'Nuestra Señora de la Medalla Milagrosa', photoId: 'virgen-milagrosa' },
+  { name: 'Nuestra Señora de Lourdes', photoId: 'virgen-lourdes' },
+  { name: 'Nuestra Señora de Fátima', photoId: 'virgen-fatima' },
+];
 
-// No se inventan templos ni direcciones. Agregar aquí los lugares verificados.
-export const temples: { name: string; city: string; address: string; mapUrl: string }[] = [];
+export const temples = [
+  { name: 'Basílica de Nuestra Señora de Luján', city: 'Luján, Argentina', address: 'San Martín 51', photoId: 'templo-lujan', website: 'https://basilicadelujan.org.ar/' },
+  { name: 'Capilla de Nuestra Señora de la Medalla Milagrosa', city: 'París, Francia', address: '140 rue du Bac', photoId: 'templo-milagrosa', website: 'https://www.chapellenotredamedelamedaillemiraculeuse.com/' },
+  { name: 'Santuario de Nuestra Señora de Lourdes', city: 'Lourdes, Francia', address: '1 avenue Monseigneur Théas', photoId: 'templo-lourdes', website: 'https://www.lourdes-france.org/' },
+  { name: 'Santuario de Nuestra Señora de Fátima', city: 'Fátima, Portugal', address: 'Cova da Iria', photoId: 'templo-fatima', website: 'https://www.fatima.pt/' },
+].map(temple => ({ ...temple, mapUrl: `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(`${temple.name}, ${temple.city}`)}` }));

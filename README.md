@@ -52,7 +52,7 @@ Se programa **al marcar como rezada**, no al abrir, asignar o enviar la intenci�
 
 ## Conectar la versión real
 
-Las instrucciones completas están en [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md). Crear los servicios, elegir región y dominio y desplegar requiere las cuentas del responsable. No se han creado recursos externos ni publicado este proyecto.
+Para una prueba pública completa y el presupuesto, empezar por [docs/PRUEBA-PUBLICA.md](docs/PRUEBA-PUBLICA.md). Las instrucciones técnicas están en [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md). Crear los servicios, elegir región y dominio y desplegar requiere las cuentas del responsable. No se han creado recursos externos ni publicado este sitio.
 
 Copiar `.env.example` a `.env` sin sobrescribir configuración existente y establecer:
 
@@ -71,9 +71,9 @@ Las claves privadas de Supabase, Resend y Turnstile y la clave del trabajador se
 
 Editar `src/content/site.ts` para modificar las siete oraciones o agregar templos reales. Es una selección inicial de textos tradicionales e instrucciones; requiere revisión pastoral. Las cuatro advocaciones propuestas por el documento son Luján, Medalla Milagrosa, Lourdes y Fátima.
 
-Las siete ilustraciones SVG del prototipo son propias, simbólicas y provisionales. No son fotografías de esas advocaciones. La galería lo aclara. Reemplazarlas con imágenes autorizadas y optimizadas; para impresión, ofrecer por separado originales de buena resolución con licencia y atribución. No se incluyeron las fotos de las páginas del documento como imágenes devocionales.
+Las imágenes se gestionan con `src/content/photos.json`, versiones WebP responsive y créditos visibles. El importador de [docs/PHOTOS.md](docs/PHOTOS.md) descarga fotografías de Wikimedia con autor y licencia compatible. Hasta completar la descarga, las ilustraciones SVG propias siguen identificadas como provisionales. No se incluyeron las fotos de las páginas del documento como imágenes devocionales. La tipografía Inter se aloja localmente y no requiere conexión a Google Fonts.
 
-La lista de templos está vacía deliberadamente: muestra una pantalla informativa hasta agregar nombres y direcciones verificados. La página de privacidad es un borrador y debe completarse con responsable, contacto, plazos aprobados y requisitos de la jurisdicción antes de publicar.
+La lista incluye Luján, la Capilla de la Medalla Milagrosa en París, Lourdes y Fátima, con dirección de referencia, mapa y sitio del santuario. Confirmar accesos y horarios en cada sitio antes de visitar. La página de privacidad es un borrador y debe completarse con responsable, contacto, plazos aprobados y requisitos de la jurisdicción antes de publicar.
 
 En [docs/PROJECT.md](docs/PROJECT.md) se registran decisiones, alcance y funciones futuras del documento.
 

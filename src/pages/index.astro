@@ -1,15 +1,47 @@
 ---
 import Layout from '../layouts/Layout.astro';
 import PublicForm from '../components/PublicForm.astro';
+import Photo from '../components/Photo.astro';
+import PhotoCredit from '../components/PhotoCredit.astro';
+import { getPhoto } from '../lib/photos';
 import { prayers, gallery } from '../content/site';
 ---
 <Layout>
   <section class="hero wrap">
-    <div class="hero-copy"><p class="eyebrow"><span aria-hidden="true">✦</span> Un espacio de fe y esperanza</p><h1>Lo que llevas<br />en el corazón,<br /><em>en oración.</em></h1><p class="lead">Acércate a María. Encuentra un momento de paz y confía tu intención a una comunidad que reza contigo.</p><div class="hero-buttons"><a class="button" href="#oraciones">Encontrar una oración <span aria-hidden="true">→</span></a><a class="text-link" href="#intenciones">Compartir mi intención</a></div><p class="quiet-note"><span aria-hidden="true">♡</span> Una oración puede ser el comienzo.</p></div>
-    <figure class="hero-image"><img src="/images/maria-1.svg" width="600" height="750" alt="Ilustración de María bajo un cielo de estrellas" fetchpriority="high" /><figcaption><span>María, madre de la esperanza</span><small>Ilustración provisional</small></figcaption></figure>
+    <div class="hero-copy">
+      <p class="eyebrow"><span aria-hidden="true">✦</span> Un espacio de fe y esperanza</p>
+      <h1>Lo que llevas<br />en el corazón,<br /><em>en oración.</em></h1>
+      <p class="lead">Acércate a María. Encuentra un momento de paz y confía tu intención a una comunidad que reza contigo.</p>
+      <div class="hero-buttons"><a class="button" href="#oraciones">Encontrar una oración <span aria-hidden="true">→</span></a><a class="text-link" href="#intenciones">Compartir mi intención</a></div>
+      <p class="quiet-note"><span aria-hidden="true">♡</span> Una oración puede ser el comienzo.</p>
+    </div>
+    <figure class="hero-image">
+      <Photo id="virgen-lujan" fallback="/images/maria-1.svg" alt="Virgen de Luján" loading="eager" priority />
+      <figcaption><span>María, madre de la esperanza</span><PhotoCredit id="virgen-lujan" /></figcaption>
+    </figure>
   </section>
-  <section class="welcome wrap"><img src="/images/maria-4.svg" width="600" height="750" alt="Ilustración de María, con las manos abiertas" loading="lazy" /><div><p class="eyebrow">Cerca de ti, en cada momento</p><h2>Un lugar para detenerte.<br /><em>Y volver a confiar.</em></h2><p>No siempre encontramos las palabras. Aquí puedes hacer una pausa, rezar y compartir aquello que hoy necesita una luz.</p><p>Una comunidad de sacerdotes recibe las intenciones y las presenta a la Virgen en oración.</p><a class="text-link" href="#intenciones">Estamos para acompañarte <span aria-hidden="true">→</span></a></div></section>
-  <section class="prayer-section" id="oraciones"><div class="wrap"><div class="section-heading"><div><p class="eyebrow">Siete momentos para encontrarnos</p><h2>Una oración para <em>tu camino.</em></h2></div><span class="section-note">Elige un momento.<br />Reza a tu ritmo.</span></div><div class="prayer-grid">{prayers.map(prayer => <a class="prayer-card" href={`/oraciones/${prayer.slug}/`}><div class="prayer-image"><img src={prayer.image} alt={`Ilustración provisional de María para ${prayer.title.toLowerCase()}`} width="600" height="750" loading="lazy" /><span>0{prayer.number}</span></div><div class="prayer-card-title"><div><h3>{prayer.title}</h3><p>{prayer.subtitle}</p></div><span aria-hidden="true">→</span></div></a>)}</div><p class="editorial-note">Selección inicial de oraciones tradicionales. Textos e imágenes pendientes de revisión pastoral.</p></div></section>
-  <section class="gallery-section wrap"><div class="section-heading"><div><p class="eyebrow">María, en nuestros hogares</p><h2>Una imagen para <em>acompañarte.</em></h2></div></div><p class="editorial-note">El proyecto propone estas cuatro advocaciones. Por ahora se muestran ilustraciones simbólicas de ejemplo; las fotografías de cada advocación se incorporarán con sus permisos de uso.</p><div class="prayer-grid">{gallery.map((name, i) => <article class="prayer-card"><div class="prayer-image"><img src={`/images/maria-${i+1}.svg`} width="600" height="750" loading="lazy" alt={`Ilustración simbólica provisional; pendiente imagen de ${name}`} /></div><h3>{name}</h3><a class="text-link" href={`/images/maria-${i+1}.svg`} download={`misterio-ilustracion-provisional-${i+1}.svg`}>Descargar ilustración ↓</a></article>)}</div></section>
-  <section class="intentions wrap" id="intenciones"><div class="intentions-copy"><p class="eyebrow">No estás solo en tu oración</p><h2>Confía tu<br /><em>intención.</em></h2><p>Comparte una petición o un agradecimiento. Un sacerdote recibirá tu intención y la presentará a la Virgen en oración.</p><div class="privacy-note"><span aria-hidden="true">♡</span><p>Tu intención es privada. Puedes usar un alias.<br />Cuando sea rezada, recibirás un único correo de nuestra comunidad.</p></div></div><div class="form-card"><PublicForm /></div></section>
+  <section class="welcome wrap">
+    <figure class="welcome-image"><Photo id="virgen-fatima" fallback="/images/maria-4.svg" alt="Nuestra Señora de Fátima" sizes="(max-width: 650px) 75vw, 340px" /><figcaption><PhotoCredit id="virgen-fatima" /></figcaption></figure>
+    <div><p class="eyebrow">Cerca de ti, en cada momento</p><h2>Un lugar para detenerte.<br /><em>Y volver a confiar.</em></h2><p>No siempre encontramos las palabras. Aquí puedes hacer una pausa, rezar y compartir aquello que hoy necesita una luz.</p><p>Una comunidad de sacerdotes recibe las intenciones y las presenta a la Virgen en oración.</p><a class="text-link" href="#intenciones">Estamos para acompañarte <span aria-hidden="true">→</span></a></div>
+  </section>
+  <section class="prayer-section" id="oraciones"><div class="wrap">
+    <div class="section-heading"><div><p class="eyebrow">Siete momentos para encontrarnos</p><h2>Una oración para <em>tu camino.</em></h2></div><span class="section-note">Elige un momento.<br />Reza a tu ritmo.</span></div>
+    <div class="prayer-grid">{prayers.map(prayer => <article class="prayer-card">
+      <a href={`/oraciones/${prayer.slug}/`}><div class="prayer-image"><Photo id={prayer.photoId} fallback={prayer.image} alt={`Imagen de María para acompañar ${prayer.title.toLowerCase()}`} sizes="(max-width: 650px) 44vw, (max-width: 950px) 30vw, 275px" /><span>0{prayer.number}</span></div><div class="prayer-card-title"><div><h3>{prayer.title}</h3><p>{prayer.subtitle}</p></div><span aria-hidden="true">→</span></div></a>
+      <PhotoCredit id={prayer.photoId} />
+    </article>)}</div>
+    <p class="editorial-note">Selección inicial de oraciones tradicionales. Textos pendientes de revisión pastoral.</p>
+  </div></section>
+  <section class="gallery-section wrap">
+    <div class="section-heading"><div><p class="eyebrow">María, en nuestros hogares</p><h2>Una imagen para <em>acompañarte.</em></h2></div></div>
+    <p class="editorial-note">Descarga una imagen para acompañar tu oración. Cada fotografía conserva su fuente, autor y licencia de uso.</p>
+    <div class="prayer-grid">{gallery.map((item, i) => {
+      const photo = getPhoto(item.photoId);
+      return <article class="prayer-card"><div class="prayer-image"><Photo id={item.photoId} fallback={`/images/maria-${i+1}.svg`} alt={item.name} sizes="(max-width: 650px) 44vw, (max-width: 950px) 30vw, 275px" /></div><h3>{item.name}</h3><PhotoCredit id={item.photoId} /><a class="text-link" href={photo?.src || `/images/maria-${i+1}.svg`} download>{photo ? 'Descargar foto' : 'Descargar ilustración provisional'} ↓</a>{photo && <a class="text-link original-link" href={photo.sourceUrl} target="_blank" rel="noopener noreferrer">Ver original y licencia →</a>}</article>;
+    })}</div>
+  </section>
+  <section class="intentions wrap" id="intenciones">
+    <div class="intentions-copy"><p class="eyebrow">No estás solo en tu oración</p><h2>Confía tu<br /><em>intención.</em></h2><p>Comparte una petición o un agradecimiento. Un sacerdote recibirá tu intención y la presentará a la Virgen en oración.</p><div class="privacy-note"><span aria-hidden="true">♡</span><p>Tu intención es privada. Puedes usar un alias.<br />Cuando sea rezada, recibirás un único correo de nuestra comunidad.</p></div></div>
+    <div class="form-card"><PublicForm /></div>
+  </section>
 </Layout>
