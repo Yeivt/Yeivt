@@ -1,0 +1,15 @@
+project_id = "misterio"
+
+[functions.submit-intention]
+verify_jwt = false
+
+[functions.request-access]
+verify_jwt = false
+
+# JWT validation and active-admin authorization are performed inside the handler.
+[functions.admin-access]
+verify_jwt = false
+
+# Uses a dedicated scheduler secret rather than a user's JWT.
+[functions.process-emails]
+verify_jwt = false

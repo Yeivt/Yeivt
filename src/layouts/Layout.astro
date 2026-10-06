@@ -1,0 +1,58 @@
+---
+import '../styles/global.css';
+import { site, prayers } from '../content/site';
+const { title = site.name, description = site.description, privatePage = false } = Astro.props;
+const demo = import.meta.env.PUBLIC_DEMO_MODE === 'true' || !import.meta.env.PUBLIC_SUPABASE_URL || !import.meta.env.PUBLIC_SUPABASE_ANON_KEY;
+---
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="description" content={description} />
+    <meta name="theme-color" content="#173b47" />
+    {privatePage && <meta name="robots" content="noindex, nofollow" />}
+    <link rel="icon" type="image/svg+xml" href="/icon.svg" />
+    <link rel="manifest" href="/manifest.webmanifest" />
+    <title>{title === site.name ? title : `${title} · ${site.name}`}</title>
+  </head>
+  <body>
+    <a class="skip-link" href="#contenido">Saltar al contenido</a>
+    {demo && <div class="demo-bar">Modo demostración · No se guardan datos ni se envían correos.</div>}
+    <header class="header wrap">
+      <a class="brand" href="/" aria-label={`${site.name}, inicio`}><span class="brand-mark" aria-hidden="true">✦</span><span><strong>{site.name}</strong><br /><small>Unidos en oración</small></span></a>
+      <div class="header-actions">
+        <a class="header-intention" href="/#intenciones">Dejar una intención <span aria-hidden="true">→</span></a>
+        <details class="menu" id="main-menu">
+          <summary>Menú <span aria-hidden="true">☰</span></summary>
+          <nav aria-label="Menú principal">
+            {prayers.map(prayer => <a href={`/oraciones/${prayer.slug}/`}><span class="menu-number">0{prayer.number}</span>{prayer.title}</a>)}
+            <a href="/#intenciones"><span class="menu-number">08</span>Intenciones</a>
+            <a href="/templos/"><span class="menu-number">09</span>Templos marianos</a>
+          </nav>
+        </details>
+      </div>
+    </header>
+    <main id="contenido"><slot /></main>
+    <footer class="footer wrap">
+      <div><span class="footer-star" aria-hidden="true">✦</span><strong>{site.name}</strong><p>Unidos en una misma oración.</p></div>
+      <div class="footer-links"><a href="/privacidad/">Privacidad</a><a href="/sacerdotes/">Acceso de sacerdotes</a><a href="/sacerdotes/solicitar/">Solicitar acceso</a></div>
+      <small>Contenido e ilustraciones provisionales, pendientes de revisión pastoral.</small>
+    </footer>
+    <script>
+      const menu = document.querySelector<HTMLDetailsElement>('#main-menu');
+      document.addEventListener('keydown', (event) => {
+        if (event.key === 'Escape' && menu?.open) { menu.open = false; menu.querySelector('summary')?.focus(); }
+      });
+      document.addEventListener('click', (event) => {
+        if (event.target instanceof Node && menu && !menu.contains(event.target)) menu.open = false;
+      });
+      menu?.querySelectorAll('a').forEach(link => link.addEventListener('click', () => { menu.open = false; }));
+      if ('serviceWorker' in navigator) {
+        window.addEventListener('load', () => {
+          navigator.serviceWorker.register('/sw.js').catch(() => { /* La web sigue disponible sin PWA. */ });
+        });
+      }
+    </script>
+  </body>
+</html>

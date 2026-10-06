@@ -1,0 +1,29 @@
+{
+  "name": "misterio",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "engines": { "node": ">=22.12.0" },
+  "scripts": {
+    "dev": "node scripts/astro.mjs dev --host 0.0.0.0",
+    "build": "node scripts/check-config.mjs && node scripts/astro.mjs build",
+    "preview": "node scripts/astro.mjs preview --host 0.0.0.0",
+    "check": "node scripts/astro.mjs check && tsc -p supabase/tsconfig.json",
+    "test": "tsx --test tests/backend.test.ts tests/database.test.ts",
+    "test:e2e": "playwright test",
+    "validate": "npm run check && npm test && npm run build && npm run test:e2e"
+  },
+  "dependencies": {
+    "@supabase/supabase-js": "2.117.2",
+    "astro": "7.3.5"
+  },
+  "devDependencies": {
+    "@astrojs/check": "0.9.10",
+    "@electric-sql/pglite": "0.5.8",
+    "@playwright/test": "1.63.0",
+    "@types/deno": "2.5.0",
+    "@types/node": "24.10.1",
+    "tsx": "4.20.6",
+    "typescript": "5.9.3"
+  }
+}

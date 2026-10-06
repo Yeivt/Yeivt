@@ -1,0 +1,5 @@
+---
+import Layout from '../layouts/Layout.astro';
+import { temples } from '../content/site';
+---
+<Layout title="Templos marianos"><section class="page-heading wrap"><p class="eyebrow">Lugares de encuentro</p><h1>Templos <em>marianos.</em></h1><p class="lead">Encuentra un lugar para rezar y compartir la fe en comunidad.</p></section><section class="wrap page-body">{temples.length ? <div class="temple-grid">{temples.map(temple => <article class="form-card"><h2>{temple.name}</h2><p>{temple.city}</p><p>{temple.address}</p><a class="text-link" href={temple.mapUrl} target="_blank" rel="noopener noreferrer">Ver en el mapa →</a></article>)}</div> : <div class="empty-state"><span aria-hidden="true">⌂</span><h2>Estamos preparando este recorrido.</h2><p>Pronto encontrarás aquí templos con sus direcciones y ubicaciones verificadas.</p><a class="button" href="/#oraciones">Mientras tanto, encontremos una oración</a></div>}</section></Layout>

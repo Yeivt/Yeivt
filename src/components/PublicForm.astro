@@ -1,0 +1,20 @@
+---
+const { kind = 'intention' } = Astro.props;
+const access = kind === 'access';
+---
+<form class="public-form" data-kind={kind}>
+  <div class="form-row"><label for={`${kind}-name`}>{access ? 'Nombre' : 'Nombre o alias'}<input id={`${kind}-name`} name="name" required minlength="2" maxlength="100" autocomplete="name" placeholder={access ? 'Tu nombre' : 'Cómo quieres que te llamemos'} /></label>
+  <label for={`${kind}-email`}>Correo electrónico<input id={`${kind}-email`} type="email" name="email" required maxlength="254" autocomplete="email" placeholder="nombre@ejemplo.com" /></label></div>
+  {access ? <>
+    <label for="access-community">Parroquia o comunidad<input id="access-community" name="community" required minlength="3" maxlength="200" placeholder="Nombre de la parroquia y localidad" /></label>
+    <label for="access-message">Presentación<textarea id="access-message" name="message" required minlength="10" maxlength="2000" rows="5" placeholder="Cuéntanos dónde ejerces tu ministerio y cómo podemos verificarlo." /></label>
+  </> : <><fieldset class="intention-kind"><legend>Quiero compartir</legend><label><input type="radio" name="kind" value="petition" checked /> Una petición</label><label><input type="radio" name="kind" value="gratitude" /> Un agradecimiento</label></fieldset><label for="intention-message">Tu intención<textarea id="intention-message" name="message" required minlength="10" maxlength="2000" rows="5" placeholder="¿Qué quieres confiar a María?" /><small>Hasta 2.000 caracteres. Evita datos sensibles de otras personas.</small></label></>}
+  <div class="honeypot" aria-hidden="true"><label>No completar<input name="website" tabindex="-1" autocomplete="off" /></label></div>
+  <label class="checkbox"><input type="checkbox" name="consent" required /><span>Acepto la <a href="/privacidad/">política de privacidad</a> y el uso de mis datos para {access ? 'revisar esta solicitud' : 'gestionar mi intención y recibir su confirmación por correo'}.</span></label>
+  <div class="captcha"></div>
+  <button class="button" type="submit">{access ? 'Solicitar acceso' : 'Enviar mi intención'} <span aria-hidden="true">→</span></button>
+  <p class="form-status" role="status" aria-live="polite"></p>
+</form>
+<script>
+  import '../scripts/public-form';
+</script>
