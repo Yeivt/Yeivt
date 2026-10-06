@@ -2,7 +2,11 @@
 
 Las fotografías deben descargarse de fuentes con licencia que permita publicar y adaptar la imagen. Esta versión incorpora un importador de Wikimedia Commons. No se asume que una foto encontrada en internet sea reutilizable.
 
-El entorno de Codex bloqueó conexiones a `commons.wikimedia.org` y `upload.wikimedia.org`. Los dominios se añadieron al borrador de configuración, pero guardar el borrador no aplica la política al proceso actual. Hasta habilitar ese acceso y completar la importación, `src/content/photos.json` permanece vacío y las páginas muestran ilustraciones expresamente identificadas como provisionales. **Todavía no se descargaron fotografías reales.**
+La selección actual incluye **11 fotografías reales de Wikimedia Commons**: siete imágenes devocionales para las oraciones y cuatro de los santuarios. Se sirven desde el propio sitio en 33 versiones WebP de 480, 800 y 1200 píxeles, sin ampliar los originales. `src/content/photos.json` conserva para cada foto el autor, la licencia, la fuente, la URL original y un texto alternativo que identifica el motivo. Las ilustraciones propias permanecen como respaldo si falta una fotografía.
+
+La imagen principal de Luján es una réplica fotografiada por Photo-Monique; no se presenta como la imagen original de la basílica. La Medalla Milagrosa está representada por una estatua en Columbus, Ohio, fotografiada por Nheyob. Las imágenes de Lourdes muestran la gruta de Massabielle. Las de Fátima conservan las identificaciones de sus páginas de origen. Las fotografías de templos corresponden a Luján, la capilla de la rue du Bac en París, Lourdes y Fátima.
+
+Los textos breves de los santuarios están en `src/content/site.ts`, junto con sus direcciones y enlaces oficiales. Describen su ubicación, devoción y espacios de oración; los horarios se consultan en el sitio de cada santuario.
 
 ## Importar una fotografía
 

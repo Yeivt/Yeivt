@@ -1,10 +1,12 @@
 # Validación del entorno de desarrollo
 
-Comando ejecutado en `/workspace/Yeivt` después de reinstalar con el lockfile:
+Comprobaciones ejecutadas en `/workspace/Yeivt` para la selección fotográfica, con las dependencias previamente instaladas desde el lockfile:
 
 ```sh
-npm ci --ignore-scripts --cache /workspace/.npm-cache
-CHROMIUM_PATH=/usr/bin/chromium npm run validate
+npm run check
+npm test
+npm run build
+CHROMIUM_PATH=/usr/bin/chromium npm run test:e2e
 ```
 
 Resultado:
@@ -13,7 +15,6 @@ Resultado:
 - 19 pruebas de servidor, PostgreSQL embebido y validación de metadatos de fotos: aprobadas, sin omisiones.
 - Compilación estática: 13 páginas generadas.
 - 9 pruebas en Chromium: aprobadas, sin omisiones; incluye la fuente Inter sin conexión y la lista de cuatro templos.
-- Auditoría de dependencias de producción: sin vulnerabilidades reportadas en la ejecución.
 
 Las pruebas cubren validación del formulario, consentimiento, captcha mediante mock, rechazo de orígenes ajenos, límite de tamaño de solicitudes, verificación de administradores, permisos anónimos y de miembros no aprobados, separación del correo, asignación/propiedad, finalización idempotente, devolución, límites por correo, bloqueos de envío, reintentos y eliminación de datos antiguos.
 
@@ -27,5 +28,8 @@ Capturas de interfaces en modo demostración:
 - [Inicio en celular](screenshots/inicio-movil.png)
 - [Panel de sacerdotes](screenshots/panel-sacerdotes.png)
 - [Templos marianos](screenshots/templos.png)
+- [Siete oraciones con sus fotografías](screenshots/oraciones.png)
 
-Las fotografías de Wikimedia siguen pendientes de descarga por el bloqueo de red; los metadatos se probaron con fixtures y la interfaz muestra ilustraciones provisionales. No se afirma una importación real de fotografías ni validación de licencias de archivos aún no descargados.
+Se descargaron once fotografías reales desde Wikimedia Commons y se conservaron los metadatos de autor, licencia y fuente. La revisión visual identificó los motivos antes de incorporarlos. Una comprobación adicional en Chromium verificó las trece apariciones de fotos del inicio, las cuatro de santuarios, sus descripciones y la decodificación de imágenes sin conexión. La página de santuarios no presenta desbordamiento horizontal en anchos de 320, 390, 768 y 1440 píxeles. No se observaron errores de JavaScript en ese recorrido.
+
+Estas capturas muestran la propuesta local; no acreditan que se haya subido a GitHub o publicado en Cloudflare.

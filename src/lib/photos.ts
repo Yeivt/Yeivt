@@ -1,6 +1,7 @@
 import manifest from '../content/photos.json';
 
 export type Photo = {
+  alt?: string;
   src: string;
   variants: { width: number; src: string }[];
   width: number;

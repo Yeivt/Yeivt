@@ -23,8 +23,36 @@ export const gallery = [
 ];
 
 export const temples = [
-  { name: 'Basílica de Nuestra Señora de Luján', city: 'Luján, Argentina', address: 'San Martín 51', photoId: 'templo-lujan', website: 'https://basilicadelujan.org.ar/' },
-  { name: 'Capilla de Nuestra Señora de la Medalla Milagrosa', city: 'París, Francia', address: '140 rue du Bac', photoId: 'templo-milagrosa', website: 'https://www.chapellenotredamedelamedaillemiraculeuse.com/' },
-  { name: 'Santuario de Nuestra Señora de Lourdes', city: 'Lourdes, Francia', address: '1 avenue Monseigneur Théas', photoId: 'templo-lourdes', website: 'https://www.lourdes-france.org/' },
-  { name: 'Santuario de Nuestra Señora de Fátima', city: 'Fátima, Portugal', address: 'Cova da Iria', photoId: 'templo-fatima', website: 'https://www.fatima.pt/' },
+  {
+    name: 'Basílica de Nuestra Señora de Luján',
+    city: 'Luján, Argentina',
+    description: 'Sus dos torres y su arquitectura neogótica distinguen uno de los principales lugares de peregrinación de Argentina. Dedicada a Nuestra Señora de Luján, patrona del país, la basílica recibe a quienes se acercan a rezar, agradecer y compartir sus intenciones ante María.',
+    address: 'San Martín 51',
+    photoId: 'templo-lujan',
+    website: 'https://basilicadelujan.org.ar/',
+  },
+  {
+    name: 'Capilla de Nuestra Señora de la Medalla Milagrosa',
+    city: 'París, Francia',
+    description: 'En la rue du Bac, esta capilla está vinculada a santa Catalina Labouré y a la tradición de las apariciones marianas de 1830, de la que nace la Medalla Milagrosa. Su interior ofrece un espacio de recogimiento, oración y encuentro para peregrinos de distintos países.',
+    address: '140 rue du Bac',
+    photoId: 'templo-milagrosa',
+    website: 'https://www.chapellenotredamedelamedaillemiraculeuse.com/',
+  },
+  {
+    name: 'Santuario de Nuestra Señora de Lourdes',
+    city: 'Lourdes, Francia',
+    description: 'Al pie de los Pirineos, el santuario se organiza alrededor de la gruta de Massabielle, vinculada a las apariciones relatadas por santa Bernardita en 1858. Sus basílicas y espacios de oración acogen a peregrinos, enfermos y acompañantes que buscan consuelo y esperanza.',
+    address: '1 avenue Monseigneur Théas',
+    photoId: 'templo-lourdes',
+    website: 'https://www.lourdes-france.org/',
+  },
+  {
+    name: 'Santuario de Nuestra Señora de Fátima',
+    city: 'Fátima, Portugal',
+    description: 'Situado en Cova da Iria, recuerda las apariciones marianas relatadas en 1917 por los tres pastorcitos: Lucía, Francisco y Jacinta. La Capilla de las Apariciones, la Basílica de Nuestra Señora del Rosario y la gran explanada invitan a rezar por la paz y compartir la fe.',
+    address: 'Cova da Iria',
+    photoId: 'templo-fatima',
+    website: 'https://www.fatima.pt/',
+  },
 ].map(temple => ({ ...temple, mapUrl: `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(`${temple.name}, ${temple.city}`)}` }));

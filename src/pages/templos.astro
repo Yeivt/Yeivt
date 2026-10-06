@@ -9,7 +9,17 @@ import { temples } from '../content/site';
   <section class="wrap page-body"><div class="temple-grid">
     {temples.map(temple => <article class="temple-card">
       <Photo id={temple.photoId} fallback="/images/templo-provisional.svg" alt={temple.name} sizes="(max-width: 650px) 90vw, 560px" />
-      <div class="temple-card-body"><PhotoCredit id={temple.photoId} /><p class="eyebrow">{temple.city}</p><h2>{temple.name}</h2><p>{temple.address}</p><div class="temple-links"><a class="text-link" href={temple.mapUrl} target="_blank" rel="noopener noreferrer">Ver en el mapa →</a><a class="text-link" href={temple.website} target="_blank" rel="noopener noreferrer">Sitio del santuario →</a></div></div>
+      <div class="temple-card-body">
+        <PhotoCredit id={temple.photoId} />
+        <p class="eyebrow">{temple.city}</p>
+        <h2>{temple.name}</h2>
+        <p class="temple-description">{temple.description}</p>
+        <p class="temple-address"><strong>Dirección:</strong> {temple.address}</p>
+        <div class="temple-links">
+          <a class="text-link" href={temple.mapUrl} target="_blank" rel="noopener noreferrer">Ver en el mapa →</a>
+          <a class="text-link" href={temple.website} target="_blank" rel="noopener noreferrer">Sitio del santuario →</a>
+        </div>
+      </div>
     </article>)}
   </div><p class="editorial-note">Consulta el sitio de cada santuario para confirmar accesos y horarios antes de visitarlo.</p></section>
 </Layout>
