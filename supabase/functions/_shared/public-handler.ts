@@ -2,9 +2,8 @@ import { HttpError, jsonResponse, parseSubmission, readBody, requireOrigin, type
 
 export function publicHandler(options: {
   origin: string;
-  access?: boolean;
   verify: (token: string, action: string) => Promise<void>;
-  save: (submission: Submission) => Promise<unknown>;
+  save: (submission: Submission, request: Request) => Promise<unknown>;
 }) {
   return async (request: Request): Promise<Response> => {
     let origin: string | undefined;
@@ -12,9 +11,9 @@ export function publicHandler(options: {
       origin = requireOrigin(request, options.origin);
       if (request.method === 'OPTIONS') return jsonResponse({}, 200, origin);
       if (request.method !== 'POST') throw new HttpError(405, 'Método no permitido.');
-      const submission = parseSubmission(await readBody(request), options.access);
-      await options.verify(submission.token, options.access ? 'access' : 'intention');
-      await options.save(submission);
+      const submission = parseSubmission(await readBody(request));
+      await options.verify(submission.token, 'intention');
+      await options.save(submission, request);
       // No IDs or personal data are returned to the anonymous client.
       return jsonResponse({ ok: true }, 201, origin);
     } catch (error) {

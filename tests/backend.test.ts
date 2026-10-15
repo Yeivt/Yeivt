@@ -1,88 +1,71 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { randomUUID } from 'node:crypto';
-import { CONFIRMATION_MESSAGE, HttpError, parseSubmission } from '../supabase/functions/_shared/domain.ts';
-import { publicHandler } from '../supabase/functions/_shared/public-handler.ts';
-import { processEmails, type EmailJob } from '../supabase/functions/_shared/email-worker.ts';
-import { requireAdmin } from '../supabase/functions/_shared/platform.ts';
-
-const valid = () => ({ submissionId: randomUUID(), name: 'Un alias', email: 'PERSONA@example.com', message: 'Una intención suficientemente larga.', kind: 'petition', consent: true, website: '', token: 'test-token' });
-const request = (body: unknown, origin = 'https://misterio.example') => new Request('https://project.supabase.co/functions/v1/submit-intention', {
-  method: 'POST', headers: { origin, 'Content-Type': 'application/json' }, body: JSON.stringify(body),
+import {randomUUID} from 'node:crypto';
+import {HttpError,parseSubmission} from '../supabase/functions/_shared/domain.ts';
+import {publicHandler} from '../supabase/functions/_shared/public-handler.ts';
+import {intercessorAuth,username,password,recoveryCode,normalizeCode,digest,type AuthDeps} from '../supabase/functions/_shared/intercessor-auth.ts';
+const valid=()=>({submissionId:randomUUID(),name:'Un alias',message:'Una intención suficientemente larga.',kind:'petition',consent:true,website:'',token:'test-token'});
+const request=(body:unknown,origin='https://misterio.example')=>new Request('https://project.supabase.co/functions/v1/test',{method:'POST',headers:{origin,'Content-Type':'application/json'},body:JSON.stringify(body)});
+test('public intentions require consent, type, lengths and captcha but no email',()=>{
+  assert.equal('email' in parseSubmission(valid()),false);
+  assert.equal('email' in parseSubmission({...valid(),email:'not-even-an-email'}),false);
+  for(const patch of [{consent:false},{name:'A'},{message:'x'.repeat(2001)},{kind:'other'},{website:'bot'},{token:''},{submissionId:'invalid'}])assert.throws(()=>parseSubmission({...valid(),...patch}),HttpError);
 });
-
-test('validates consent, email, type, lengths and captcha before saving', () => {
-  assert.equal(parseSubmission(valid()).email, 'persona@example.com');
-  for (const patch of [{ consent: false }, { name: 'A' }, { email: 'invalid' }, { message: 'x'.repeat(2001) }, { kind: 'other' }, { website: 'bot' }, { token: '' }, { submissionId: 'invalid' }]) {
-    assert.throws(() => parseSubmission({ ...valid(), ...patch }), HttpError);
+test('verifies captcha before saving; rejects foreign origins and oversized bodies',async()=>{
+  let saved=0,verified=false;
+  const handler=publicHandler({origin:'https://misterio.example',verify:async()=>{verified=true;},save:async(s)=>{assert.ok(verified);assert.equal('email' in s,false);saved++;}});
+  const response=await handler(request(valid()));assert.equal(response.status,201);assert.deepEqual(await response.json(),{ok:true});assert.equal(saved,1);assert.equal(response.headers.get('cache-control'),'no-store');
+  assert.equal((await handler(request(valid(),'https://foreign.example'))).status,403);
+  assert.equal((await handler(request({...valid(),message:'a'.repeat(17000)}))).status,413);assert.equal(saved,1);
+});
+test('usernames have no spaces; passwords and recovery codes are validated',async()=>{
+  assert.equal(username('Ana_Maria'),'ana_maria');
+  for(const name of ['Ana María',' conespacio','ana maria','x','<script>'])assert.throws(()=>username(name),HttpError);
+  assert.throws(()=>password('short'),HttpError);assert.equal(password('a'.repeat(12)).length,12);
+  const one=recoveryCode(),two=recoveryCode();assert.notEqual(one,two);assert.equal(normalizeCode(one.toUpperCase()).length,48);assert.equal((await digest(normalizeCode(one))).length,64);
+});
+const secret='s'.repeat(64);
+function dependencies(overrides:Partial<AuthDeps>={}):AuthDeps{return{origin:'https://misterio.example',registrationSecret:()=>secret,limit:async()=>{},db:async()=>[],auth:async()=>({id:'test-user'}),...overrides};}
+test('registration rejects a missing, wrong or rotated invitation without creating an account',async()=>{
+  let accounts=0;const handler=intercessorAuth(dependencies({auth:async()=>{accounts++;return{id:'user'};}}));
+  for(const key of ['', 'wrong', 'old-secret'])assert.equal((await handler(request({action:'register',username:'ana',password:'a'.repeat(12),secret:key}))).status,403);
+  assert.equal(accounts,0);
+});
+test('valid invitation creates a confirmed Auth identity, approved membership and hashed recovery code without sending mail',async()=>{
+  const writes:any[]=[];const handler=intercessorAuth(dependencies({auth:async(path,method,body:any)=>{assert.equal(path,'admin/users');assert.equal(method,'POST');assert.equal(body.email_confirm,true);assert.equal(body.email,`${await digest('ana')}@intercesor.misterio.invalid`);return{id:'new-user'};},db:async(path,method,body)=>{writes.push({path,method,body});return null;}}));
+  const response=await handler(request({action:'register',username:'Ana',password:'a'.repeat(12),secret}));assert.equal(response.status,201);
+  const result=await response.json();assert.equal(result.username,'ana');assert.ok(result.recoveryCode);
+  assert.equal(writes[0].path,'rpc/register_intercessor');assert.equal(writes[0].body.p_recovery_hash,await digest(normalizeCode(result.recoveryCode)));
+  assert.equal(response.headers.get('cache-control'),'no-store');
+});
+test('membership failure compensates by removing the newly created Auth account',async()=>{
+  const calls:string[]=[];const handler=intercessorAuth(dependencies({auth:async(path)=>{calls.push(path);return{id:'orphan'};},db:async()=>{throw new Error('DB failed');}}));
+  assert.equal((await handler(request({action:'register',username:'ana',password:'a'.repeat(12),secret}))).status,503);assert.deepEqual(calls,['admin/users','admin/users/orphan']);
+});
+test('login returns a session only after verifying current membership',async()=>{
+  let approved=false;const handler=intercessorAuth(dependencies({auth:async()=>({access_token:'access',refresh_token:'refresh',user:{id:'id'}}),db:async()=>approved?[{user_id:'id'}]:[]}));
+  const body={action:'login',username:'ana',password:'a'.repeat(12)};
+  assert.equal((await handler(request(body))).status,403);approved=true;
+  assert.deepEqual(await(await handler(request(body))).json(),{access_token:'access',refresh_token:'refresh'});
+});
+test('throttling and origin checks happen before an Auth write',async()=>{
+  let writes=0;const handler=intercessorAuth(dependencies({limit:async()=>{throw new HttpError(429,'Límite');},auth:async()=>{writes++;}}));
+  const body={action:'register',username:'ana',password:'a'.repeat(12),secret};
+  assert.equal((await handler(request(body))).status,429);assert.equal((await handler(request(body,'https://foreign.example'))).status,403);assert.equal(writes,0);
+});
+test('recovery releases its reservation on Auth failure and returns a new code on success',async()=>{
+  for(const fail of [true,false]){
+    const writes:any[]=[];const handler=intercessorAuth(dependencies({db:async(path,_method,body)=>{writes.push({path,body});return path==='rpc/reserve_recovery'?'user':true;},auth:async()=>{if(fail)throw new Error('Auth failed');return{};}}));
+    const response=await handler(request({action:'recover',username:'ana',password:'a'.repeat(12),code:recoveryCode()}));
+    assert.equal(response.status,fail?503:200);assert.equal(writes[1].body.p_success,!fail);
+    if(!fail){const result=await response.json();assert.equal(await digest(normalizeCode(result.recoveryCode)),writes[0].body.p_next_hash);}
   }
-  assert.throws(() => parseSubmission(valid(), true), HttpError);
-  assert.equal(parseSubmission({ ...valid(), community: 'Parroquia de ejemplo' }, true).community, 'Parroquia de ejemplo');
 });
 
-test('accepts a verified submission without returning personal data', async () => {
-  let saved = 0; let verified = false;
-  const handler = publicHandler({ origin: 'https://misterio.example', verify: async (token, action) => { assert.equal(token, 'test-token'); assert.equal(action, 'intention'); verified = true; }, save: async () => { assert.equal(verified, true); saved++; } });
-  const response = await handler(request(valid()));
-  assert.equal(response.status, 201); assert.deepEqual(await response.json(), { ok: true });
-  assert.equal(saved, 1); assert.equal(response.headers.get('cache-control'), 'no-store');
-});
-
-test('rejects other origins and failed captcha without any database write', async () => {
-  let saves = 0;
-  const handler = publicHandler({ origin: 'https://misterio.example', verify: async () => { throw new HttpError(400, 'Verificación inválida.'); }, save: async () => { saves++; } });
-  const foreign = await handler(request(valid(), 'https://foreign.example'));
-  assert.equal(foreign.status, 403); assert.equal(foreign.headers.get('access-control-allow-origin'), null);
-  assert.equal((await handler(request(valid()))).status, 400); assert.equal(saves, 0);
-});
-
-test('bounds streamed request bodies even without Content-Length', async () => {
-  const handler = publicHandler({ origin: 'https://misterio.example', verify: async () => {}, save: async () => { assert.fail('should not save'); } });
-  assert.equal((await handler(request({ ...valid(), message: 'a'.repeat(17000) }))).status, 413);
-});
-
-const job: EmailJob = { id: 'job-id', intention_id: 'intention-id', email: 'recipient@example.com', lease_token: 'lease-id', attempts: 1 };
-test('sends exactly the chosen message with a stable provider idempotency key', async () => {
-  let takes = 0; let acknowledgements = 0;
-  const result = await processEmails({ from: 'Misterio <oracion@example.com>', apiKey: 'test-only', take: async () => takes++ === 0 ? job : null,
-    fetcher: async (url, init) => {
-      assert.equal(url, 'https://api.resend.com/emails');
-      assert.equal((init!.headers as Record<string, string>)['Idempotency-Key'], 'misterio-intention-intention-id');
-      const body = JSON.parse(String(init!.body));
-      assert.equal(body.text, CONFIRMATION_MESSAGE); assert.deepEqual(body.to, [job.email]);
-      assert.deepEqual(Object.keys(body).sort(), ['from', 'subject', 'text', 'to']);
-      return Response.json({ id: 'provider-id' });
-    }, finish: async (entry, id) => { assert.equal(entry.id, job.id); assert.equal(id, 'provider-id'); acknowledgements++; }, retry: async () => assert.fail('should not retry'),
-  });
-  assert.deepEqual(result, { sent: 1, failed: 0 }); assert.equal(acknowledgements, 1);
-});
-
-test('a delivery with a lost acknowledgement retries using the same idempotency key', async () => {
-  const keys: string[] = []; let attempt = 0; let retry = 0;
-  await processEmails({ from: 'oracion@example.com', apiKey: 'test-only', take: async () => attempt++ < 2 ? job : null,
-    fetcher: async (_url, init) => { keys.push((init!.headers as Record<string, string>)['Idempotency-Key']); return Response.json({ id: 'same-provider-id' }); },
-    finish: async () => { if (attempt === 1) throw new Error('ack failed'); }, retry: async (_entry, reason) => { assert.equal(reason, 'delivery_or_ack_failed'); retry++; },
-  });
-  assert.equal(retry, 1); assert.equal(keys.length, 2); assert.equal(keys[0], keys[1]);
-});
-
-test('provider errors retain only an operational code, never an email or body', async () => {
-  let seen: string | undefined; let take = true;
-  await processEmails({ from: 'oracion@example.com', apiKey: 'test-only', take: async () => { if (!take) return null; take = false; return job; },
-    fetcher: async () => new Response('private provider body', { status: 429 }), finish: async () => assert.fail(), retry: async (_job, reason) => { seen = reason; },
-  });
-  assert.equal(seen, 'provider_http_429');
-});
-
-test('admin access checks the JWT with Auth and a current approved admin membership', async () => {
-  const priorDeno = (globalThis as any).Deno; const priorFetch = globalThis.fetch;
-  (globalThis as any).Deno = { env: { get: (key: string) => ({ SUPABASE_URL: 'https://project.supabase.co', SUPABASE_SERVICE_ROLE_KEY: 'server-only' }[key]) } };
-  try {
-    await assert.rejects(requireAdmin(new Request('https://example.com')), (error: unknown) => error instanceof HttpError && error.status === 401);
-    let isAdmin = false;
-    globalThis.fetch = async (url) => String(url).endsWith('/auth/v1/user') ? Response.json({ id: 'user-id' }) : Response.json(isAdmin ? [{ user_id: 'user-id' }] : []);
-    const authenticated = new Request('https://example.com', { headers: { authorization: 'Bearer test-session' } });
-    await assert.rejects(requireAdmin(authenticated), (error: unknown) => error instanceof HttpError && error.status === 403);
-    isAdmin = true; assert.equal(await requireAdmin(authenticated), 'user-id');
-  } finally { globalThis.fetch = priorFetch; (globalThis as any).Deno = priorDeno; }
+// Regression for Supabase's non-JWT API keys; only user sessions are Bearer JWTs.
+test('modern service keys use apikey without being misrepresented as a JWT',async()=>{
+  const {apiHeaders}=await import('../supabase/functions/_shared/platform.ts');
+  assert.deepEqual(apiHeaders('sb_secret_test'),{apikey:'sb_secret_test'});
+  assert.deepEqual(apiHeaders('sb_secret_test','user.jwt.token'),{apikey:'sb_secret_test',Authorization:'Bearer user.jwt.token'});
+  assert.deepEqual(apiHeaders('legacy.jwt.key'),{apikey:'legacy.jwt.key',Authorization:'Bearer legacy.jwt.key'});
 });

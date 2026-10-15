@@ -6,9 +6,22 @@ export function env(name: string) {
   return value;
 }
 
-export async function rest(path: string, method = 'GET', body?: unknown, token = env('SUPABASE_SERVICE_ROLE_KEY')): Promise<any> {
+// Hosted projects may expose modern named secret keys or legacy JWT keys.
+export function serviceKey(): string {
+  const encoded = Deno.env.get('SUPABASE_SECRET_KEYS');
+  if (encoded) {
+    const keys = JSON.parse(encoded);
+    if (typeof keys.default === 'string' && keys.default) return keys.default;
+  }
+  return env('SUPABASE_SERVICE_ROLE_KEY');
+}
+export function apiHeaders(key: string, token = key): Record<string,string> {
+  return { apikey:key, ...(token.startsWith('sb_') ? {} : { Authorization:`Bearer ${token}` }) };
+}
+
+export async function rest(path: string, method = 'GET', body?: unknown, token = serviceKey()): Promise<any> {
   const response = await fetch(`${env('SUPABASE_URL')}/rest/v1/${path}`, {
-    method, headers: { apikey: env('SUPABASE_SERVICE_ROLE_KEY'), Authorization: `Bearer ${token}`, 'Content-Type': 'application/json', Prefer: 'return=representation' },
+    method, headers: { ...apiHeaders(serviceKey(),token), 'Content-Type': 'application/json', Prefer: 'return=representation' },
     body: body === undefined ? undefined : JSON.stringify(body), signal: AbortSignal.timeout(15000),
   });
   if (!response.ok) {
@@ -24,7 +37,7 @@ export async function requireAdmin(request: Request) {
   const authorization = request.headers.get('authorization') || '';
   if (!/^Bearer .+/.test(authorization)) throw new HttpError(401, 'Debes iniciar sesión.');
   const response = await fetch(`${env('SUPABASE_URL')}/auth/v1/user`, {
-    headers: { apikey: env('SUPABASE_SERVICE_ROLE_KEY'), Authorization: authorization }, signal: AbortSignal.timeout(10000),
+    headers: { apikey: serviceKey(), Authorization: authorization }, signal: AbortSignal.timeout(10000),
   });
   if (!response.ok) throw new HttpError(401, 'La sesión no es válida.');
   const user = await response.json();

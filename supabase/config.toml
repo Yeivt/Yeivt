@@ -13,3 +13,6 @@ verify_jwt = false
 # Uses a dedicated scheduler secret rather than a user's JWT.
 [functions.process-emails]
 verify_jwt = false
+
+[functions.intercessor-auth]
+verify_jwt = false

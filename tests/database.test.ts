@@ -1,127 +1,127 @@
-import test, { before, after } from 'node:test';
+import test,{before,after} from 'node:test';
 import assert from 'node:assert/strict';
-import { readFile } from 'node:fs/promises';
-import { randomUUID } from 'node:crypto';
-import { PGlite } from '@electric-sql/pglite';
-
-let db: PGlite;
-const priestA = randomUUID(), priestB = randomUUID(), outsider = randomUUID(), admin = randomUUID();
-before(async () => {
-  db = new PGlite();
-  await db.exec(`
-    create role anon; create role authenticated; create role service_role bypassrls;
-    create schema auth;
-    create table auth.users(id uuid primary key, email text unique);
-    create function auth.uid() returns uuid language sql stable as $$ select nullif(current_setting('request.jwt.claim.sub', true), '')::uuid; $$;
-    grant usage on schema auth to authenticated;
-    grant execute on function auth.uid() to authenticated;
-  `);
-  for (const name of ['202610060001_initial.sql', '202610060002_access_approval.sql']) await db.exec(await readFile(new URL(`../supabase/migrations/${name}`, import.meta.url), 'utf8'));
-  for (const [id, email, role, approved] of [[priestA, 'a@example.com', 'priest', true], [priestB, 'b@example.com', 'priest', true], [outsider, 'outside@example.com', 'priest', false], [admin, 'admin@example.com', 'admin', true]] as const) {
-    await db.query('insert into auth.users(id,email) values($1,$2)', [id, email]);
-    await db.query('insert into public.members(user_id,display_name,role,approved) values($1,$2,$3,$4)', [id, 'Usuario de prueba', role, approved]);
+import {readFile} from 'node:fs/promises';
+import {randomUUID} from 'node:crypto';
+import {PGlite} from '@electric-sql/pglite';
+let db:PGlite;
+const a=randomUUID(),b=randomUUID(),outsider=randomUUID();
+const legacyUser=randomUUID(),legacyPending=randomUUID(),legacyAssigned=randomUUID(),legacyCompleted=randomUUID();
+before(async()=>{
+  db=new PGlite();
+  await db.exec(`create role anon;create role authenticated;create role service_role bypassrls;
+    create schema auth;create table auth.users(id uuid primary key,email text unique);
+    create function auth.uid() returns uuid language sql stable as $$select nullif(current_setting('request.jwt.claim.sub',true),'')::uuid;$$;
+    grant usage on schema auth to authenticated;grant execute on function auth.uid() to authenticated;`);
+  for(const name of ['202610060001_initial.sql','202610060002_access_approval.sql']) await db.exec(await readFile(new URL(`../supabase/migrations/${name}`,import.meta.url),'utf8'));
+  await db.query('insert into auth.users(id,email) values($1,$2)',[legacyUser,'legacy@example.com']);
+  await db.query("insert into public.members(user_id,display_name,role,approved) values($1,'Legado','priest',true)",[legacyUser]);
+  for(const [id,kind,status] of [[legacyPending,'petition','pending'],[legacyAssigned,'petition','assigned'],[legacyCompleted,'gratitude','completed']]){
+    await db.query("insert into public.intentions(id,submission_id,name,message,kind,status,assigned_to,completed_at) values($1,$2,'Alias legado','Un mensaje anterior a la migración',$3,$4,$5,case when $4='completed' then now()-interval '1 hour' else null end)",[id,randomUUID(),kind,status,status==='pending'?null:legacyUser]);
+    await db.query('insert into public.intention_contacts(intention_id,email) values($1,$2)',[id,'private@example.com']);
+  }
+  await db.query('insert into public.email_jobs(intention_id) values($1)',[legacyCompleted]);
+  await db.exec(await readFile(new URL('../supabase/migrations/202610150001_intercessor_inbox.sql',import.meta.url),'utf8'));
+  for(const [id,approved] of [[a,true],[b,true],[outsider,false]] as const){
+    await db.query('insert into auth.users(id,email) values($1,$2)',[id,`${id}@example.com`]);
+    await db.query('insert into public.members(user_id,display_name,role,approved) values($1,$2,$3,$4)',[id,'Intercesor de prueba','intercessor',approved]);
   }
 });
-after(async () => { await db.close(); });
-
-async function asUser<T>(id: string, work: () => Promise<T>): Promise<T> {
-  await db.exec('set role authenticated');
-  await db.query("select set_config('request.jwt.claim.sub', $1, false)", [id]);
-  try { return await work(); } finally { await db.exec('reset role'); }
+after(async()=>{await db.close();});
+async function asUser<T>(id:string,work:()=>Promise<T>):Promise<T>{
+  await db.exec('set role authenticated');await db.query("select set_config('request.jwt.claim.sub',$1,false)",[id]);
+  try{return await work();}finally{await db.exec('reset role');}
 }
-async function create(email = `${randomUUID()}@example.com`, key = randomUUID()) {
-  const result = await db.query<{ id: string }>('select public.create_intention($1,$2,$3,$4,$5) as id', [key, 'Alias privado', email, 'Una petición suficientemente larga.', 'petition']);
-  return result.rows[0].id;
+async function create(kind='petition',key=randomUUID(),rate=randomUUID().replaceAll('-','').repeat(2)){
+  return (await db.query<{id:string}>('select public.create_intention($1,$2,$3,$4,$5) as id',[key,'Alias privado','Una intención suficientemente larga.',kind,rate])).rows[0].id;
 }
-
-test('anonymous visitors cannot read intentions, contacts or insert through RPC', async () => {
-  await db.exec('set role anon');
-  try {
-    await assert.rejects(db.query('select * from public.intentions'), /permission denied/);
-    await assert.rejects(db.query('select * from public.intention_contacts'), /permission denied/);
-    await assert.rejects(db.query('select public.create_intention($1,$2,$3,$4,$5)', [randomUUID(), 'Name', 'a@b.com', 'Long enough message', 'petition']), /permission denied/);
-  } finally { await db.exec('reset role'); }
+async function stats(){return(await db.query<any>('select * from public.community_totals')).rows[0];}
+test('migration preserves existing messages and prior readings, seeds totals and retires queued mail',async()=>{
+  const rows=(await db.query<any>('select id,read_at from public.intentions order by id')).rows;
+  assert.equal(rows.find(row=>row.id===legacyPending).read_at,null);
+  assert.ok(rows.find(row=>row.id===legacyAssigned).read_at);
+  assert.ok(Date.now()-Date.parse(rows.find(row=>row.id===legacyCompleted).read_at)>=3599000);
+  const totals=await stats();assert.equal(Number(totals.petitions),2);assert.equal(Number(totals.gratitudes),1);assert.equal(Number(totals.petitions_read),1);assert.equal(Number(totals.gratitudes_read),1);assert.equal(Number(totals.intercessors),1);
+  assert.equal((await db.query<any>("select to_regclass('public.email_jobs') as table")).rows[0].table,null);
 });
-
-test('unapproved members cannot see or claim intentions', async () => {
-  const id = await create();
-  await asUser(outsider, async () => {
-    assert.equal((await db.query('select * from public.intentions')).rows.length, 0);
-    await assert.rejects(db.query('select * from public.claim_intention($1)', [id]), /not_authorized/);
+test('anonymous and unapproved users cannot read messages, counters or recovery hashes',async()=>{
+  await db.exec('set role anon');try{
+    for(const table of ['intentions','community_totals','intercessor_credentials','request_limits']) await assert.rejects(db.query(`select * from public.${table}`),/permission denied/);
+    await assert.rejects(db.query('select * from public.open_intention($1)',[randomUUID()]),/permission denied/);
+    await assert.rejects(db.query('select public.create_intention($1,$2,$3,$4,$5)',[randomUUID(),'Alias','Un texto largo de prueba','petition','f'.repeat(64)]),/permission denied/);
+  }finally{await db.exec('reset role');}
+  await asUser(outsider,async()=>{
+    assert.equal((await db.query('select * from public.intentions')).rows.length,0);
+    assert.equal((await db.query('select * from public.community_totals')).rows.length,0);
+    await assert.rejects(db.query('select * from public.open_intention($1)',[randomUUID()]),/not_authorized/);
   });
 });
-
-test('claiming hides an intention from another priest while retaining it for its owner', async () => {
-  const id = await create();
-  await asUser(priestA, async () => {
-    const row = (await db.query<any>('select * from public.claim_intention($1)', [id])).rows[0];
-    assert.equal(row.assigned_to, priestA); assert.equal('email' in row, false);
-    assert.equal((await db.query('select * from public.intentions where id=$1', [id])).rows.length, 1);
-    await assert.rejects(db.query('select * from public.intention_contacts'), /permission denied/);
-    await assert.rejects(db.query("update public.intentions set status='completed' where id=$1", [id]), /permission denied/);
+test('first opening is shared, keeps the message visible and counts it once',async()=>{
+  const initial=await stats();const id=await create();let readAt:unknown;
+  await asUser(a,async()=>{
+    const row=(await db.query<any>('select * from public.open_intention($1)',[id])).rows[0];readAt=row.read_at;
+    assert.ok(readAt);assert.equal(row.name,'Alias privado');assert.equal('email' in row,false);
+    await assert.rejects(db.query('delete from public.intentions where id=$1',[id]),/permission denied/);
+    await assert.rejects(db.query('update public.intentions set read_at=null where id=$1',[id]),/permission denied/);
+    await assert.rejects(db.query('select * from public.intercessor_credentials'),/permission denied/);
   });
-  await asUser(priestB, async () => {
-    assert.equal((await db.query('select * from public.intentions where id=$1', [id])).rows.length, 0);
-    await assert.rejects(db.query('select * from public.claim_intention($1)', [id]), /intention_unavailable/);
-    await assert.rejects(db.query('select public.complete_intention($1)', [id]), /not_authorized/);
+  await asUser(b,async()=>{
+    const row=(await db.query<any>('select * from public.open_intention($1)',[id])).rows[0];
+    assert.equal(String(row.read_at),String(readAt));assert.equal((await db.query('select * from public.intentions where id=$1',[id])).rows.length,1);
   });
+  assert.equal(Number((await stats()).petitions_read),Number(initial.petitions_read)+1);
 });
-
-test('completion queues one email even if repeated and removes the intention from its owner', async () => {
-  const id = await create();
-  await asUser(priestA, async () => {
-    await db.query('select * from public.claim_intention($1)', [id]);
-    await db.query('select public.complete_intention($1)', [id]);
-    await db.query('select public.complete_intention($1)', [id]);
-    assert.equal((await db.query('select * from public.intentions where id=$1', [id])).rows.length, 0);
-    await assert.rejects(db.query('select * from public.email_jobs'), /permission denied/);
+test('petitions and gratitudes have independent persistent counters; duplicate submissions do not count twice',async()=>{
+  const initial=await stats(),key=randomUUID();const id=await create('gratitude',key);
+  assert.equal(await create('gratitude',key),id);
+  await asUser(a,async()=>{await db.query('select * from public.open_intention($1)',[id]);});
+  const current=await stats();assert.equal(Number(current.gratitudes),Number(initial.gratitudes)+1);assert.equal(Number(current.gratitudes_read),Number(initial.gratitudes_read)+1);
+  assert.equal(Number(current.petitions),Number(initial.petitions));
+});
+test('48h retention is measured from first read, hides expired rows before cleanup, preserves unread and cumulative counts',async()=>{
+  const expired=await create(),unread=await create(),recent=await create();
+  await asUser(a,async()=>{await db.query('select * from public.open_intention($1)',[expired]);await db.query('select * from public.open_intention($1)',[recent]);});
+  await db.query("update public.intentions set read_at=now()-interval '48 hours 1 second' where id=$1",[expired]);
+  await db.query("update public.intentions set created_at=now()-interval '400 days' where id=$1",[unread]);
+  const initial=await stats();
+  await asUser(b,async()=>{
+    assert.equal((await db.query('select * from public.intentions where id=$1',[expired])).rows.length,0);
+    await assert.rejects(db.query('select * from public.open_intention($1)',[expired]),/intention_unavailable/);
+    assert.equal((await db.query('select * from public.intentions where id=$1',[unread])).rows.length,1);
   });
-  assert.equal((await db.query('select * from public.email_jobs where intention_id=$1', [id])).rows.length, 1);
-});
-
-test('an owner can return an intention for another priest to claim', async () => {
-  const id = await create();
-  await asUser(priestA, async () => { await db.query('select * from public.claim_intention($1)', [id]); await db.query('select public.release_intention($1)', [id]); });
-  await asUser(priestB, async () => { assert.equal((await db.query<any>('select * from public.claim_intention($1)', [id])).rows[0].assigned_to, priestB); });
-});
-
-test('submission idempotency and server rate limits are enforced in SQL', async () => {
-  const key = randomUUID(); const email = `${randomUUID()}@example.com`;
-  assert.equal(await create(email, key), await create(email, key));
-  await create(email); await create(email);
-  await assert.rejects(create(email), /rate_limit/);
-});
-
-test('email leases prevent double pickup, stale acknowledgements and late automatic retries', async () => {
-  await db.exec("update public.email_jobs set status='sent'");
-  const id = await create();
-  await asUser(priestA, async () => { await db.query('select * from public.claim_intention($1)', [id]); await db.query('select public.complete_intention($1)', [id]); });
-  const job = (await db.query<any>('select * from public.take_email_job()')).rows[0];
-  assert.equal(job.intention_id, id); assert.ok(job.email);
-  assert.equal((await db.query('select * from public.take_email_job()')).rows.length, 0);
-  assert.equal((await db.query<any>('select public.finish_email_job($1,$2,$3) as ok', [job.id, randomUUID(), 'provider'])).rows[0].ok, false);
-  await db.query('select public.retry_email_job($1,$2,$3)', [job.id, job.lease_token, 'timeout']);
-  await db.query("update public.email_jobs set first_attempt_at=now()-interval '24 hours', next_attempt_at=now()-interval '1 minute' where id=$1", [job.id]);
-  assert.equal((await db.query('select * from public.take_email_job()')).rows.length, 0);
-  assert.equal((await db.query<any>('select status from public.email_jobs where id=$1', [job.id])).rows[0].status, 'review');
-});
-
-test('approval is admin-only and verifies email identity before creating a membership', async () => {
-  const user = randomUUID(), requestId = randomUUID();
-  await db.query('insert into auth.users(id,email) values($1,$2)', [user, 'new@example.com']);
-  await db.query('insert into public.access_requests(id,submission_id,name,email,community,message) values($1,$2,$3,$4,$5,$6)', [requestId, randomUUID(), 'Nuevo sacerdote', 'new@example.com', 'Una comunidad', 'Una presentación verificable.']);
-  await assert.rejects(db.query('select public.approve_access_request($1,$2,$3)', [requestId, user, priestA]), /not_authorized/);
-  await assert.rejects(db.query('select public.approve_access_request($1,$2,$3)', [requestId, outsider, admin]), /identity_mismatch/);
-  await db.query('select public.approve_access_request($1,$2,$3)', [requestId, user, admin]);
-  const member = (await db.query<any>('select role,approved from public.members where user_id=$1', [user])).rows[0];
-  assert.deepEqual(member, { role: 'priest', approved: true });
-  await asUser(priestA, async () => { await assert.rejects(db.query('select public.approve_access_request($1,$2,$3)', [requestId, user, admin]), /permission denied/); });
-});
-
-test('retention deletes old personal data and related contacts and email jobs', async () => {
-  const id = await create();
-  await db.query("update public.intentions set created_at=now()-interval '181 days' where id=$1", [id]);
   await db.query('select public.cleanup_personal_data()');
-  assert.equal((await db.query('select * from public.intentions where id=$1', [id])).rows.length, 0);
-  assert.equal((await db.query('select * from public.intention_contacts where intention_id=$1', [id])).rows.length, 0);
+  assert.equal((await db.query('select * from public.intentions where id=$1',[expired])).rows.length,0);
+  assert.equal((await db.query('select * from public.intentions where id=any($1)',[[unread,recent]])).rows.length,2);
+  assert.deepEqual(await stats(),initial);
+});
+test('no mail pipeline remains and old transitions cannot be invoked',async()=>{
+  for(const name of ['intention_contacts','email_jobs'])assert.equal((await db.query<any>('select to_regclass($1) as table',[`public.${name}`])).rows[0].table,null);
+  for(const name of ['claim_intention','complete_intention','release_intention'])await assert.rejects(db.query(`select public.${name}($1)`,[randomUUID()]),/does not exist/);
+});
+test('hourly server throttling is independent of an email address',async()=>{
+  const rate='a'.repeat(64);
+  for(let i=0;i<10;i++)await create('petition',randomUUID(),rate);
+  await assert.rejects(create('petition',randomUUID(),rate),/rate_limit/);
+});
+test('registration is service-only, usernames are unique and counters survive account removal',async()=>{
+  const id=randomUUID(),second=randomUUID(),initial=Number((await stats()).intercessors);
+  for(const user of [id,second])await db.query('insert into auth.users(id,email) values($1,$2)',[user,`${user}@example.com`]);
+  await asUser(a,async()=>{await assert.rejects(db.query('select public.register_intercessor($1,$2,$3)',[id,'ana_maria','a'.repeat(64)]),/permission denied/);});
+  await db.query('select public.register_intercessor($1,$2,$3)',[id,'ana_maria','a'.repeat(64)]);
+  await assert.rejects(db.query('select public.register_intercessor($1,$2,$3)',[second,'ana_maria','b'.repeat(64)]),/duplicate key/);
+  await assert.rejects(db.query('select public.register_intercessor($1,$2,$3)',[second,'con espacio','b'.repeat(64)]),/check constraint/);
+  const member=(await db.query<any>('select role,approved from public.members where user_id=$1',[id])).rows[0];assert.deepEqual(member,{role:'intercessor',approved:true});
+  await db.query('delete from auth.users where id=$1',[id]);assert.equal(Number((await stats()).intercessors),initial+1);
+});
+test('recovery reservations prevent reuse and rotate the code only on success',async()=>{
+  const id=randomUUID();await db.query('insert into auth.users(id,email) values($1,$2)',[id,'recover@example.com']);
+  await db.query('select public.register_intercessor($1,$2,$3)',[id,'recover','a'.repeat(64)]);
+  const reserve=async(hash:string,next:string)=>(await db.query<any>('select public.reserve_recovery($1,$2,$3) as id',['recover',hash,next])).rows[0].id;
+  assert.equal(await reserve('f'.repeat(64),'b'.repeat(64)),null);
+  assert.equal(await reserve('a'.repeat(64),'b'.repeat(64)),id);
+  assert.equal(await reserve('a'.repeat(64),'c'.repeat(64)),null);
+  await db.query('select public.finish_recovery($1,$2,false)',[id,'b'.repeat(64)]);
+  assert.equal(await reserve('a'.repeat(64),'c'.repeat(64)),id);
+  await db.query('select public.finish_recovery($1,$2,true)',[id,'c'.repeat(64)]);
+  assert.equal(await reserve('a'.repeat(64),'d'.repeat(64)),null);
+  assert.equal(await reserve('c'.repeat(64),'d'.repeat(64)),id);
 });
