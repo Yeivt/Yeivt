@@ -1,0 +1,54 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'unsafe-inline'; style-src 'unsafe-inline'; connect-src 'none'; base-uri 'none'; form-action 'none'">
+<title>Claves para Misterio</title>
+<style>
+:root{font-family:system-ui,sans-serif;color:#234c59;background:#faf8f2}body{max-width:760px;margin:40px auto;padding:0 22px 40px}h1{font-size:2rem;line-height:1.2}p{line-height:1.7}section{background:white;border:1px solid #d6ded8;border-radius:12px;padding:22px;margin:20px 0}h2{font-size:1rem;overflow-wrap:anywhere}textarea{box-sizing:border-box;width:100%;font:1rem/1.6 ui-monospace,monospace;padding:12px;color:#234c59;background:#f6f8f4;border:1px solid #c2cec5;border-radius:6px;resize:none;overflow-wrap:anywhere;word-break:break-all}button{font:inherit;background:#234c59;color:white;border:0;border-radius:6px;padding:13px 18px;cursor:pointer;min-height:44px}button:focus-visible,textarea:focus-visible{outline:3px solid #a57f3e;outline-offset:3px}.note{font-size:.9rem;color:#53676a}#status{min-height:1.8em;font-weight:600}ol{padding-left:22px;line-height:1.8}code{font-size:.9em}a{color:inherit;text-decoration:underline}
+</style>
+</head>
+<body>
+<h1>Generá las claves de Misterio</h1>
+<p>Las dos claves se generan en tu navegador, con 64 caracteres cada una. Esta página funciona sin conexión y no envía ni guarda los valores en ningún servidor.</p>
+<p class="note">Mantené esta pestaña abierta hasta terminar. Si volvés a abrir el archivo o recargás, se generan claves nuevas. Usá siempre los valores que guardes en Supabase.</p>
+<section><h2>1. RATE_LIMIT_SECRET</h2><p class="note">Copiá el valor y guardalo en Supabase con ese nombre exacto.</p><textarea id="rate" rows="3" readonly spellcheck="false" aria-label="Valor para RATE_LIMIT_SECRET"></textarea><p><button type="button" data-copy="rate">Copiar primer valor</button></p></section>
+<section><h2>2. INTERCESSOR_REGISTRATION_SECRET</h2><p class="note">Guardá este valor con ese nombre exacto. También lo vas a usar en el enlace privado de alta.</p><textarea id="registration" rows="3" readonly spellcheck="false" aria-label="Valor para INTERCESSOR_REGISTRATION_SECRET"></textarea><p><button type="button" data-copy="registration">Copiar segundo valor</button></p></section>
+<p id="status" role="status" aria-live="polite"></p>
+<p><button type="button" id="download">Guardar una copia privada de las dos claves</button></p>
+<p class="note">La copia se descarga en tu equipo. No la subas al repositorio ni la compartas por chat.</p>
+<h2>Cómo guardarlas en Supabase</h2>
+<ol><li>Abrí <strong>Edge Functions → Secrets</strong> en tu proyecto.</li><li>Agregá el nombre <code>RATE_LIMIT_SECRET</code>, pegá el primer valor y guardá.</li><li>Agregá el nombre <code>INTERCESSOR_REGISTRATION_SECRET</code>, pegá el segundo valor y guardá.</li><li>Volvé al chat y escribí <strong>«listo, guardé ambas»</strong>, sin pegar las claves.</li></ol>
+<script>
+'use strict';
+const status=document.getElementById('status');
+function randomKey(){return Array.from(crypto.getRandomValues(new Uint8Array(32)),byte=>byte.toString(16).padStart(2,'0')).join('');}
+if(!globalThis.crypto?.getRandomValues){status.textContent='Abrí el archivo con un navegador actualizado para generar las claves.';document.querySelectorAll('button').forEach(button=>button.disabled=true);}
+else{
+  const rate=document.getElementById('rate'),registration=document.getElementById('registration');
+  rate.value=randomKey();do{registration.value=randomKey();}while(registration.value===rate.value);
+  document.querySelectorAll('[data-copy]').forEach(button=>button.addEventListener('click',async()=>{
+    const field=document.getElementById(button.dataset.copy);
+    try{
+      if(!navigator.clipboard?.writeText)throw new Error('manual');
+      await navigator.clipboard.writeText(field.value);
+      status.textContent='Valor copiado. Pegalo en el campo Value de Supabase y guardá.';
+    }catch{
+      field.focus();field.select();
+      try{
+        if(!document.execCommand('copy'))throw new Error('manual');
+        status.textContent='Valor copiado. Pegalo en el campo Value de Supabase y guardá.';
+      }catch{status.textContent='El valor quedó seleccionado. Usá Copiar del menú del navegador y pegalo en Supabase.';}
+    }
+  }));
+  document.getElementById('download').addEventListener('click',()=>{
+    const contents='RATE_LIMIT_SECRET='+rate.value+'\nINTERCESSOR_REGISTRATION_SECRET='+registration.value+'\n';
+    const url=URL.createObjectURL(new Blob([contents],{type:'text/plain;charset=utf-8'}));
+    const link=document.createElement('a');link.href=url;link.download='misterio-claves-privadas.txt';link.click();setTimeout(()=>URL.revokeObjectURL(url),1000);
+    status.textContent='La copia se descargó en tu equipo. Guardala en un lugar privado.';
+  });
+}
+</script>
+</body>
+</html>
