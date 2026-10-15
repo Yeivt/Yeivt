@@ -12,7 +12,6 @@ function loadCaptcha() {
 }
 
 document.querySelectorAll<HTMLFormElement>('.public-form').forEach(form => {
-  const access = form.dataset.kind === 'access';
   const button = form.querySelector<HTMLButtonElement>('button[type=submit]')!;
   const status = form.querySelector<HTMLElement>('.form-status');
   const label = button.textContent;
@@ -24,7 +23,7 @@ document.querySelectorAll<HTMLFormElement>('.public-form').forEach(form => {
     if (!sitekey) message(status, 'El envío aún no está habilitado. Falta configurar la verificación de seguridad.', true);
     else loadCaptcha().then(() => {
       widget = window.turnstile!.render(form.querySelector<HTMLElement>('.captcha')!, {
-        sitekey, action: access ? 'access' : 'intention',
+        sitekey, action: 'intention',
         callback: () => { button.disabled = false; },
         'expired-callback': () => { button.disabled = true; },
         'error-callback': () => { button.disabled = true; message(status, 'No se pudo completar la verificación. Recarga la página.', true); },
@@ -44,13 +43,13 @@ document.querySelectorAll<HTMLFormElement>('.public-form').forEach(form => {
     button.disabled = true; button.textContent = 'Enviando…';
     const data = new FormData(form);
     try {
-      await invoke(access ? 'request-access' : 'submit-intention', {
-        submissionId, name: data.get('name'), email: data.get('email'), message: data.get('message'), kind: data.get('kind') || 'petition',
-        community: data.get('community') || '', consent: data.get('consent') === 'on', website: data.get('website') || '',
+      await invoke('submit-intention', {
+        submissionId, name: data.get('name'), message: data.get('message'), kind: data.get('kind') || 'petition',
+        consent: data.get('consent') === 'on', website: data.get('website') || '',
         token: widget ? window.turnstile?.getResponse(widget) : '',
       });
       form.reset(); submissionId = crypto.randomUUID();
-      message(status, access ? 'Recibimos tu solicitud. El equipo verificará tus datos antes de habilitar tu acceso.' : 'Recibimos tu intención. Cuando sea presentada en oración, te enviaremos un único correo.');
+      message(status, 'Recibimos tu intención. Nuestra comunidad la acompañará en oración.');
     } catch (error) { message(status, errorText(error), true); }
     finally {
       button.textContent = label;

@@ -1,6 +1,6 @@
-# Validación del entorno de desarrollo
+# Validación — rediseño e Intercesor
 
-Comprobaciones ejecutadas en `/workspace/Yeivt` para la selección fotográfica, con las dependencias previamente instaladas desde el lockfile:
+Ejecutado sobre Node.js 24 y Chromium local:
 
 ```sh
 npm run check
@@ -9,27 +9,20 @@ npm run build
 CHROMIUM_PATH=/usr/bin/chromium npm run test:e2e
 ```
 
-Resultado:
+- Astro y TypeScript del sitio y las funciones: sin errores ni advertencias.
+- 20 casos de servidor, PostgreSQL embebido y metadatos de fotos: aprobados (9 de servidor, 9 de base y 2 de fotos).
+- Compilación estática de 15 páginas: aprobada.
+- 11 pruebas de Chromium: aprobadas. Vista en 320, 390, 768 y 1440px, formulario sin correo, consentimiento, solapas con teclado, lectura y relectura sin duplicar contador, filtros, registro no enlazado, usuarios sin espacios, recuperación y oraciones offline.
+- Revisión visual en escritorio y móvil, sin errores de JavaScript en el recorrido de captura.
 
-- Comprobación de Astro/TypeScript del frontend y funciones: sin errores.
-- 19 pruebas de servidor, PostgreSQL embebido y validación de metadatos de fotos: aprobadas, sin omisiones.
-- Compilación estática: 13 páginas generadas.
-- 9 pruebas en Chromium: aprobadas, sin omisiones; incluye la fuente Inter sin conexión y la lista de cuatro templos.
+La prueba de migración parte de mensajes pendientes, asignados y completados, con contactos y correos en cola en el esquema anterior. Comprueba la conservación de mensajes, conversión de lecturas, inicialización de totales y retirada de la cola. Se prueban también permisos anónimos y de cuentas no habilitadas, imposibilidad de borrar o modificar directamente, límites sin correo, retención desde primera lectura, persistencia de contadores y reserva/rotación de códigos de recuperación.
 
-Las pruebas cubren validación del formulario, consentimiento, captcha mediante mock, rechazo de orígenes ajenos, límite de tamaño de solicitudes, verificación de administradores, permisos anónimos y de miembros no aprobados, separación del correo, asignación/propiedad, finalización idempotente, devolución, límites por correo, bloqueos de envío, reintentos y eliminación de datos antiguos.
+Las pruebas de servidor usan adaptadores simulados para Auth y Turnstile; el SQL se ejecuta en PGlite. Las pruebas del navegador usan el modo demostración identificado. No equivalen a desplegar ni validar el proyecto Supabase real: quedan por comprobar Auth, encabezados de red, Turnstile, cron y dos sesiones reales siguiendo [DEPLOYMENT.md](DEPLOYMENT.md).
 
-En navegador se comprobó el menú de nueve opciones, ausencia de desbordamiento horizontal y proporción de imágenes en anchos 320, 390, 768 y 1440, formulario de demostración, asignación y finalización en el panel, revisión administrativa, ajuste de letra y lectura de una oración sin conexión. Las rutas privadas y de API quedan fuera de CacheStorage.
+Capturas de la versión nueva en demostración:
 
-Estas pruebas no utilizan un proyecto Supabase desplegado ni envían mensajes reales. Falta validar Auth, Turnstile real, SMTP, Resend, tareas programadas y el circuito entre dos cuentas en el entorno externo. Ver el checklist de `DEPLOYMENT.md`.
+- [Inicio de escritorio](screenshots/inicio-desktop.png)
+- [Inicio móvil](screenshots/inicio-movil.png)
+- [Bandeja de Intercesor](screenshots/panel-intercesor.png)
 
-Capturas de interfaces en modo demostración:
-
-- [Inicio en computadora](screenshots/inicio-desktop.png)
-- [Inicio en celular](screenshots/inicio-movil.png)
-- [Panel de sacerdotes](screenshots/panel-sacerdotes.png)
-- [Templos marianos](screenshots/templos.png)
-- [Siete oraciones con sus fotografías](screenshots/oraciones.png)
-
-Se descargaron once fotografías reales desde Wikimedia Commons y se conservaron los metadatos de autor, licencia y fuente. La revisión visual identificó los motivos antes de incorporarlos. Una comprobación adicional en Chromium verificó las trece apariciones de fotos del inicio, las cuatro de santuarios, sus descripciones y la decodificación de imágenes sin conexión. La página de santuarios no presenta desbordamiento horizontal en anchos de 320, 390, 768 y 1440 píxeles. No se observaron errores de JavaScript en ese recorrido.
-
-Estas capturas muestran la propuesta local; no acreditan que se haya subido a GitHub o publicado en Cloudflare.
+Las capturas no incluyen usuarios ni intenciones reales. Las fotografías de las páginas internas se conservan. Las capturas antiguas de otras pantallas permanecen como historial y no describen el nuevo panel.

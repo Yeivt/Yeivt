@@ -47,3 +47,7 @@ IDs disponibles:
 La selección es manual para evitar atribuir una imagen a un lugar o advocación incorrectos. Tras importar, comprobar el encuadre en inicio, tarjetas y páginas; la foto se adapta visualmente a cada espacio sin modificar su archivo original. Subir los WebP y `photos.json` a GitHub y recompilar para publicar.
 
 Las licencias pueden exigir atribución y compartir las adaptaciones bajo la misma licencia. Los créditos visibles y el manifiesto deben acompañar a las fotografías. El enlace al original explica su licencia también para quien vaya a imprimir o reutilizarlo.
+
+## Inicio rediseñado (15 de octubre de 2026)
+
+El inicio usa exclusivamente `public/images/maria-esperanza.svg`, una ilustración vectorial propia del proyecto, en azul, marfil y dorado, con manto, doce estrellas y una luz en el corazón. Reemplaza las fotografías del inicio y la galería descargable repetida. No requiere atribuciones a terceros ni descargas externas. Las fotografías y licencias descritas arriba se mantienen en las oraciones y templos.

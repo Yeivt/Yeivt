@@ -11,7 +11,7 @@
     "build": "node scripts/check-config.mjs && node scripts/astro.mjs build",
     "preview": "node scripts/astro.mjs preview --host 0.0.0.0",
     "check": "node scripts/astro.mjs check && tsc -p supabase/tsconfig.json",
-    "test": "tsx --test tests/backend.test.ts tests/database.test.ts tests/photos.test.mjs",
+    "test": "node --import tsx --test tests/backend.test.ts tests/database.test.ts tests/photos.test.mjs",
     "test:e2e": "playwright test",
     "validate": "npm run check && npm test && npm run build && npm run test:e2e",
     "photos": "node --use-env-proxy scripts/photos.mjs"

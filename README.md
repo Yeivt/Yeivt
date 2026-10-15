@@ -1,97 +1,60 @@
 # Misterio
 
-Web responsive y PWA para orar, compartir peticiones y agradecimientos y recibir una única confirmación cuando una intención se presenta en oración. Basada en el documento «Proyecto Misterio (abril 2026)» y el circuito acordado con el usuario. Sin publicidad, pagos ni perfiles públicos.
+Web mariana y PWA para orar y compartir peticiones y agradecimientos privados. Inicio con una ilustración propia de María, oraciones en una lista compacta y templos en su página independiente.
 
-## Probar el proyecto
+El formulario pide **nombre o alias, tipo y texto**. No solicita correo ni envía notificaciones. La sección tiene las solapas **Intención | Intercesor**.
 
-Requiere Node.js 22.12 o posterior y npm. Desde la raíz del repositorio:
+## Desarrollo y validación
+
+Node.js 22.12 o posterior:
 
 ```sh
 npm ci --ignore-scripts
 npm run dev
-```
-
-Sin configuración externa se inicia en **demostración**. Hay un aviso visible: los formularios no guardan datos ni envían correos. En el acceso de sacerdotes y en `/admin/` hay botones para explorar ejemplos ficticios. Estos ejemplos viven solo en memoria y se reinician al recargar.
-
-```sh
 npm run check
 npm test
 npm run build
-npm run preview
+CHROMIUM_PATH=/usr/bin/chromium npm run test:e2e
 ```
 
-La lectura sin conexión se prueba sobre la compilación con `preview`, no sobre el servidor de desarrollo. El service worker descarga las siete oraciones y sus recursos públicos después de la primera visita con conexión. Los formularios requieren internet y nunca se encolan offline.
+Sin configuración externa hay una **demostración identificada**. Los formularios no guardan datos ni crean cuentas. La bandeja usa ejemplos en memoria que se reinician al recargar. Para un Chromium instalado por Playwright, omitir `CHROMIUM_PATH`.
 
-Para las pruebas de navegador:
+## Intercesor
 
-```sh
-npx playwright install chromium
-npm run test:e2e
-```
-
-En el entorno de nube hay un Chromium instalado: `CHROMIUM_PATH=/usr/bin/chromium npm run test:e2e`. Estas pruebas esperan una compilación en modo demostración. No envían correos reales.
-
-## Qué está incluido
-
-- Inicio con dos imágenes y sus textos, acceso a oraciones, galería descargable y formulario al final.
-- Nueve opciones de menú: Ave María, Salve, Rosario, Ángelus, Bajo tu amparo, Acuérdate, Magníficat, Intenciones y Templos marianos.
-- Siete páginas con imagen, oración, tamaño de texto ajustable y navegación anterior/siguiente.
-- Peticiones y agradecimientos privados; se puede usar un alias.
-- Panel autorizado con pendientes y «Mis intenciones asignadas». Las completadas desaparecen del panel.
-- Asignación atómica en PostgreSQL para impedir que dos personas reciban una misma intención.
-- Solicitud de acceso, aprobación manual y acceso mediante enlace de correo.
-- Panel del responsable en `/admin/`. Conocer la dirección no concede permisos: el servidor verifica sesión y rol.
-- Correos en una cola persistente con reintentos, exclusión entre trabajadores y clave de idempotencia.
-- Caché offline limitada a páginas y recursos públicos, HTTPS en alojamiento y políticas de seguridad para Cloudflare Pages.
-
-El único cuerpo del correo de confirmación es:
-
-> Tu intención fue presentada a la Virgen en oración. Gracias por confiar tu petición a nuestra comunidad.
-
-Se programa **al marcar como rezada**, no al abrir, asignar o enviar la intención. Supabase Auth envía sus propios mensajes de acceso a los miembros; no son confirmaciones de intenciones.
+- Ingreso con usuario sin espacios y contraseña. Usuarios de 3–32 caracteres: letras sin tilde, números, punto, guion y guion bajo; no distingue mayúsculas. Contraseñas de 12–128 caracteres.
+- Alta inmediata con un enlace de invitación que contiene una clave comprobada en el servidor. No hay enlace público al registro, aprobación manual ni correo de validación. La dirección por sí sola no concede acceso.
+- Código de recuperación aleatorio entregado una sola vez, con descarga opcional. Se conserva solo su SHA-256. Usarlo cambia la contraseña y reemplaza el código.
+- Bandeja compartida: todos los intercesores vigentes ven todos los mensajes disponibles, también los anteriores al alta. Al abrir uno queda leído para todos. La primera lectura se registra atómicamente una sola vez.
+- Los mensajes leídos permanecen disponibles 48 horas **desde la primera apertura**. Volver a abrir no extiende el plazo. No hay acciones para archivar, mover, eliminar o completar.
+- Se puede filtrar por Sin leer, Todos y Leídos. La bandeja se actualiza cada 15 segundos mientras está visible y al regresar a la pestaña; cada apertura consulta el estado del servidor.
+- Los contadores de peticiones, agradecimientos, primeras lecturas por tipo e intercesores registrados son acumulados y sobreviven al borrado de los mensajes. Una lectura no acredita que alguien haya rezado. Los contadores se muestran dentro del panel privado.
 
 ## Conectar la versión real
 
-Para una prueba pública completa y el presupuesto, empezar por [docs/PRUEBA-PUBLICA.md](docs/PRUEBA-PUBLICA.md). Las instrucciones técnicas están en [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md). Crear los servicios, elegir región y dominio y desplegar requiere las cuentas del responsable. No se han creado recursos externos ni publicado este sitio.
+Ver [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md). Requiere Supabase (Auth, PostgreSQL y Edge Functions), un widget Turnstile y el alojamiento estático existente en Cloudflare. No requiere Resend ni SMTP para las nuevas cuentas de Intercesor.
 
-Copiar `.env.example` a `.env` sin sobrescribir configuración existente y establecer:
+La migración nueva se aplica **después** de las dos anteriores. Retira la cola y los contactos de correo, transforma el panel de asignación en bandeja compartida y conserva los datos disponibles. Los mensajes previamente asignados pasan a leídos desde la migración; los completados conservan su fecha. Los contadores históricos arrancan con los registros existentes; no se pueden reconstruir mensajes que ya se hubieran borrado.
 
-| Variable pública | Uso |
-| --- | --- |
-| `PUBLIC_SUPABASE_URL` | URL del proyecto Supabase. |
-| `PUBLIC_SUPABASE_ANON_KEY` | Clave pública/publishable o anon, nunca `service_role`. |
-| `PUBLIC_TURNSTILE_SITE_KEY` | Clave pública del widget antispam de Cloudflare. |
-| `PUBLIC_DEMO_MODE` | `false` para funcionamiento real. |
+La eliminación física requiere ejecutar `supabase/schedule.sql`: barrido cada cinco minutos. Los mensajes vencidos quedan excluidos por permisos de base de datos exactamente a las 48h, incluso si se demora el barrido. Las intenciones sin leer no caducan automáticamente.
 
-Las variables públicas se incorporan al compilar. Hay que recompilar cuando cambian. Una compilación con `PUBLIC_DEMO_MODE=false` falla si faltan variables requeridas.
-
-Las claves privadas de Supabase, Resend y Turnstile y la clave del trabajador se configuran **solo en las funciones de Supabase**, nunca en Astro ni en Cloudflare Pages.
-
-## Contenido
-
-Editar `src/content/site.ts` para modificar las siete oraciones o agregar templos reales. Es una selección inicial de textos tradicionales e instrucciones; requiere revisión pastoral. Las cuatro advocaciones propuestas por el documento son Luján, Medalla Milagrosa, Lourdes y Fátima.
-
-Las imágenes se gestionan con `src/content/photos.json`, versiones WebP responsive y créditos visibles. El importador de [docs/PHOTOS.md](docs/PHOTOS.md) descarga fotografías de Wikimedia con autor y licencia compatible. Incluye once fotografías reales: siete imágenes devocionales y cuatro de los santuarios, con sus descripciones. Las ilustraciones SVG propias quedan como respaldo si falta una foto. No se incluyeron las fotos de las páginas del documento como imágenes devocionales. La tipografía Inter se aloja localmente y no requiere conexión a Google Fonts.
-
-La lista incluye Luján, la Capilla de la Medalla Milagrosa en París, Lourdes y Fátima, con dirección de referencia, mapa y sitio del santuario. Confirmar accesos y horarios en cada sitio antes de visitar. La página de privacidad es un borrador y debe completarse con responsable, contacto, plazos aprobados y requisitos de la jurisdicción antes de publicar.
-
-En [docs/PROJECT.md](docs/PROJECT.md) se registran decisiones, alcance y funciones futuras del documento.
+No subir secretos al repositorio ni colocarlos en variables `PUBLIC_*`. La clave de invitación es reemplazable desde la configuración del servidor.
 
 ## Organización
 
 ```text
-src/content/          Oraciones, nombre y templos
-src/pages/            Páginas públicas y paneles
-src/scripts/          Formularios, autenticación y acciones
-public/               Ilustraciones, iconos y PWA
-supabase/migrations/  Tablas, permisos y transiciones
-supabase/functions/   Formularios públicos, administración y correo
-supabase/schedule.sql Tareas programadas de correo y eliminación
-tests/                Pruebas de servidor, PostgreSQL y navegador
+src/pages/index.astro                 Inicio y solapas
+src/components/Intercessor.astro      Acceso y bandeja
+src/pages/intercesor/                 Alta y recuperación (no indexadas)
+src/scripts/intercessor.ts            Sesión, filtros y lectura
+src/scripts/enrollment.ts             Alta y recuperación
+src/styles/community.css             Diseño del inicio y panel
+public/images/maria-esperanza.svg     Ilustración propia del inicio
+supabase/migrations/                  Esquema, permisos, contadores y lectura
+supabase/functions/intercessor-auth/  Registro, ingreso y recuperación
+supabase/functions/submit-intention/  Envío privado sin correo
+supabase/schedule.sql                 Borrado automático
 ```
 
-## Mantenimiento
+Las fotografías existentes se mantienen en las oraciones y los templos, con sus créditos y licencias. El cambio de imagen afecta solamente al inicio. Las páginas antiguas de sacerdotes redirigen a la solapa Intercesor. El panel `/admin/` se conserva para cuentas administrativas previas; no interviene en las nuevas altas.
 
-Revisar entregas de correo, solicitudes de acceso y trabajos en estado `review`; activar respaldos acordes con el plan elegido y comprobar una restauración. Revisar periódicamente actualizaciones de dependencias. Al cambiar recursos públicos, incrementar la versión `CACHE` de `public/sw.js` para retirar recursos antiguos tras cerrar las pestañas previas.
-
-Los avisos de entrega del proveedor pueden ayudar al responsable a detectar rebotes; aceptar una petición de envío no garantiza que llegue a la bandeja de entrada. No se agregan mensajes alternativos ni notificaciones repetidas al solicitante.
+La PWA almacena páginas y recursos públicos. No almacena mensajes privados, respuestas de API, altas ni recuperaciones. La lectura de oraciones funciona sin conexión; los formularios y el panel real requieren internet.

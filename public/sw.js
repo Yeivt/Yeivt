@@ -1,12 +1,12 @@
 // Only this explicit list of public, non-personal resources can enter CacheStorage.
-const CACHE = 'misterio-public-v3';
+const CACHE = 'misterio-public-v4';
 const PUBLIC_PATHS = [
   '/', '/templos/', '/privacidad/', '/manifest.webmanifest', '/icon.svg',
   '/icons/icon-192.png', '/icons/icon-512.png',
   '/oraciones/ave-maria/', '/oraciones/salve/', '/oraciones/rosario/',
   '/oraciones/angelus/', '/oraciones/bajo-tu-amparo/', '/oraciones/acuerdate/', '/oraciones/magnificat/',
   ...Array.from({ length: 7 }, (_, i) => `/images/maria-${i + 1}.svg`),
-  '/images/templo-provisional.svg',
+  '/images/templo-provisional.svg', '/images/maria-esperanza.svg',
 ];
 const PUBLIC_SET = new Set(PUBLIC_PATHS);
 

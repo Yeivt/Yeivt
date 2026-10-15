@@ -1,27 +1,22 @@
-export const CONFIRMATION_MESSAGE = 'Tu intención fue presentada a la Virgen en oración. Gracias por confiar tu petición a nuestra comunidad.';
-export const CONFIRMATION_SUBJECT = 'Tu intención fue presentada en oración';
-
 export class HttpError extends Error {
   constructor(public status: number, message: string) { super(message); }
 }
 
 export type Submission = {
-  submissionId: string; name: string; email: string; message: string;
-  kind: 'petition' | 'gratitude'; community: string; token: string;
+  submissionId: string; name: string; message: string;
+  kind: 'petition' | 'gratitude'; token: string;
 };
 
-export function parseSubmission(value: unknown, access = false): Submission {
+export function parseSubmission(value: unknown): Submission {
   if (!value || typeof value !== 'object' || Array.isArray(value)) throw new HttpError(400, 'Formulario inválido.');
   const body = value as Record<string, unknown>;
   const str = (key: string) => typeof body[key] === 'string' ? (body[key] as string).trim() : '';
-  const submission = { submissionId: str('submissionId'), name: str('name'), email: str('email').toLowerCase(), message: str('message'), kind: str('kind') || 'petition', community: str('community'), token: str('token') };
+  const submission = { submissionId: str('submissionId'), name: str('name'), message: str('message'), kind: str('kind') || 'petition', token: str('token') };
   if (!/^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(submission.submissionId)) throw new HttpError(400, 'Identificador inválido.');
   if (body.consent !== true) throw new HttpError(400, 'Debes aceptar la política de privacidad.');
   if (str('website')) throw new HttpError(400, 'Formulario inválido.');
   if (submission.name.length < 2 || submission.name.length > 100 || submission.message.length < 10 || submission.message.length > 2000) throw new HttpError(400, 'Revisa la longitud del nombre y de la intención.');
-  if (submission.email.length > 254 || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(submission.email)) throw new HttpError(400, 'Revisa tu correo electrónico.');
   if (!['petition', 'gratitude'].includes(submission.kind)) throw new HttpError(400, 'Tipo de intención inválido.');
-  if (access && (submission.community.length < 3 || submission.community.length > 200)) throw new HttpError(400, 'Indica tu parroquia o comunidad.');
   if (!submission.token || submission.token.length > 2048) throw new HttpError(400, 'Completa la verificación de seguridad.');
   return submission as Submission;
 }

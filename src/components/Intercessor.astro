@@ -1,0 +1,30 @@
+<section id="intercessor-app" aria-label="Acceso de Intercesor">
+  <div id="intercessor-login" class="intercessor-login">
+    <p class="eyebrow">Comunidad de oración</p><h3>Ingresá como intercesor</h3>
+    <p>Un momento de tu tiempo puede acompañar a alguien. Ingresá para leer las peticiones y los agradecimientos de nuestra comunidad.</p>
+    <form id="intercessor-login-form">
+      <label for="intercessor-username">Usuario<input id="intercessor-username" name="username" required pattern="[A-Za-z0-9][A-Za-z0-9._\-]{2,31}" minlength="3" maxlength="32" autocomplete="username" autocapitalize="none" spellcheck="false" placeholder="Tu usuario, sin espacios" /></label>
+      <label for="intercessor-password">Contraseña<input id="intercessor-password" name="password" type="password" required minlength="12" maxlength="128" autocomplete="current-password" /></label>
+      <button class="button" type="submit">Ingresar <span aria-hidden="true">→</span></button>
+    </form>
+    <p id="intercessor-auth-status" class="form-status" role="status" aria-live="polite"></p>
+    <button id="intercessor-demo" class="text-button" type="button" hidden>Explorar la bandeja de demostración</button>
+    <a class="text-link" href="/intercesor/recuperar/">Olvidé mi contraseña</a>
+  </div>
+  <div id="intercessor-dashboard" hidden>
+    <div class="inbox-heading"><div><p class="eyebrow">Unidos en oración</p><h3>La bandeja de nuestra comunidad</h3><p id="intercessor-welcome"></p></div><button id="intercessor-logout" class="text-button" type="button">Cerrar sesión</button></div>
+    <div class="community-stats" aria-label="Actividad de la comunidad">
+      <div><strong id="stat-petitions">0</strong><span>Peticiones</span><small id="stat-petitions-read">0 leídas</small></div>
+      <div><strong id="stat-gratitudes">0</strong><span>Agradecimientos</span><small id="stat-gratitudes-read">0 leídos</small></div>
+      <div><strong id="stat-read">0</strong><span>Leídas para orar</span><small>Contadas una sola vez</small></div>
+      <div><strong id="stat-intercessors">0</strong><span>Intercesores</span><small>Registrados en la comunidad</small></div>
+    </div>
+    <p class="inbox-note">Al abrir un mensaje queda leído para toda la comunidad. Podés volver a abrirlo durante 48 horas desde su primera lectura; después se elimina automáticamente. Los contadores conservan los totales. Abrir un mensaje no confirma que alguien ya haya rezado.</p>
+    <div class="inbox-toolbar"><div class="inbox-filters" role="group" aria-label="Filtrar mensajes"><button type="button" data-inbox-filter="unread" aria-pressed="true">Sin leer <span id="inbox-unread-count">0</span></button><button type="button" data-inbox-filter="all" aria-pressed="false">Todos</button><button type="button" data-inbox-filter="read" aria-pressed="false">Leídos</button></div><button id="inbox-refresh" class="text-button" type="button">Actualizar</button></div>
+    <p id="inbox-status" class="form-status" role="status" aria-live="polite"></p>
+    <div id="inbox-list" class="inbox-list"></div>
+    <button id="inbox-more" class="button secondary small" type="button" hidden>Cargar más mensajes</button>
+    <dialog id="intention-reader" class="intention-reader" aria-labelledby="reader-name"><button type="button" id="reader-close" class="reader-close" aria-label="Cerrar mensaje">×</button><p id="reader-kind" class="eyebrow"></p><h2 id="reader-name"></h2><p id="reader-date" class="reader-meta"></p><div id="reader-message" class="reader-message"></div><p class="reader-footnote">Tomate un momento para acompañar esta intención en oración.</p></dialog>
+  </div>
+</section>
+<script>import '../scripts/intercessor';</script>

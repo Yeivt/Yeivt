@@ -10,3 +10,8 @@
   Cache-Control: no-store
 /admin/*
   Cache-Control: no-store
+
+/intercesor/*
+  Cache-Control: no-store
+  Referrer-Policy: no-referrer
+  X-Robots-Tag: noindex, nofollow
