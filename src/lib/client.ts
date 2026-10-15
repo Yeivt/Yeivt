@@ -12,7 +12,7 @@ export async function invoke<T>(name: string, body: unknown, authenticated = fal
   const session = authenticated ? (await supabase.auth.getSession()).data.session : null;
   if (authenticated && !session) throw new Error('Inicia sesión nuevamente.');
   const response = await fetch(`${url}/functions/v1/${name}`, {
-    method: 'POST', headers: { 'Content-Type': 'application/json', apikey: key, Authorization: `Bearer ${session?.access_token || key}` },
+    method: 'POST', headers: { 'Content-Type': 'application/json', apikey: key, ...(session ? { Authorization: `Bearer ${session.access_token}` } : {}) },
     body: JSON.stringify(body), cache: 'no-store', signal: AbortSignal.timeout(20000),
   });
   const result = await response.json().catch(() => null);

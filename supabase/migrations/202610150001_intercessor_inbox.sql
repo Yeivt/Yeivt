@@ -19,7 +19,7 @@ alter table public.community_totals enable row level security;
 revoke all on public.community_totals from anon, authenticated;
 grant select on public.community_totals to authenticated;
 grant all on public.community_totals to service_role;
-create policy intercessor_totals on public.community_totals for select to authenticated using(public.is_intercessor());
+create policy intercessor_totals on public.community_totals for select to authenticated using((select public.is_intercessor()));
 
 -- Stop the old notification pipeline, including already queued messages.
 do $$ declare job record; begin
@@ -46,7 +46,7 @@ alter table public.intentions drop column status, drop column assigned_to, drop 
 create index intentions_inbox on public.intentions(read_at, created_at desc, id);
 -- Expired messages become inaccessible even between scheduled cleanup runs.
 create policy shared_inbox on public.intentions for select to authenticated using(
-  public.is_intercessor() and (read_at is null or read_at > now() - interval '48 hours')
+  (select public.is_intercessor()) and (read_at is null or read_at > now() - interval '48 hours')
 );
 
 create table public.request_limits (

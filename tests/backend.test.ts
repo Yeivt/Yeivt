@@ -61,3 +61,11 @@ test('recovery releases its reservation on Auth failure and returns a new code o
     if(!fail){const result=await response.json();assert.equal(await digest(normalizeCode(result.recoveryCode)),writes[0].body.p_next_hash);}
   }
 });
+
+// Regression for Supabase's non-JWT API keys; only user sessions are Bearer JWTs.
+test('modern service keys use apikey without being misrepresented as a JWT',async()=>{
+  const {apiHeaders}=await import('../supabase/functions/_shared/platform.ts');
+  assert.deepEqual(apiHeaders('sb_secret_test'),{apikey:'sb_secret_test'});
+  assert.deepEqual(apiHeaders('sb_secret_test','user.jwt.token'),{apikey:'sb_secret_test',Authorization:'Bearer user.jwt.token'});
+  assert.deepEqual(apiHeaders('legacy.jwt.key'),{apikey:'legacy.jwt.key',Authorization:'Bearer legacy.jwt.key'});
+});

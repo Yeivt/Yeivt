@@ -25,7 +25,7 @@ Configurar en Edge Functions:
 | `RATE_LIMIT_SECRET` | Secreto aleatorio independiente, de al menos 32 bytes, para derivar identificadores de red mediante HMAC. |
 | `INTERCESSOR_REGISTRATION_SECRET` | Clave aleatoria de invitación, de 32 a 256 caracteres; usar 64 caracteres hexadecimales. |
 
-Supabase inyecta `SUPABASE_URL` y `SUPABASE_SERVICE_ROLE_KEY` al servidor. Nunca deben incorporarse a archivos compilados como configuración pública. No se necesitan claves de Resend ni del antiguo trabajador de correo.
+Supabase inyecta `SUPABASE_URL` y las claves privadas al servidor. Las funciones prefieren `SUPABASE_SECRET_KEYS.default` cuando existe, con respaldo en `SUPABASE_SERVICE_ROLE_KEY` para proyectos legados. Nunca deben incorporarse a archivos compilados como configuración pública. No se necesitan claves de Resend ni del antiguo trabajador de correo.
 
 El servidor usa el último valor de `x-forwarded-for` observado por el ingreso de Supabase para los límites por red. Confirmar en el despliegue que el proxy proporciona esa cabecera sin registrar su contenido. Si falta, las solicitudes comparten un límite conservador. Hay 10 intenciones/hora por identificador de red, 5 intentos de alta/hora y 30 de ingreso o recuperación/hora; Auth añade sus propios límites.
 
@@ -62,7 +62,7 @@ PUBLIC_SUPABASE_ANON_KEY=CLAVE_PUBLICA_DEL_PROYECTO
 PUBLIC_TURNSTILE_SITE_KEY=CLAVE_PUBLICA_DEL_WIDGET
 ```
 
-El widget Turnstile debe admitir el dominio real. Usar `npm ci --ignore-scripts` y `npm run build`; la salida es `dist/`. Hay que recompilar tras cambiar variables públicas. La configuración de demostración no guarda datos ni crea usuarios, aunque se suba el sitio a un dominio real.
+La variable `PUBLIC_SUPABASE_ANON_KEY` acepta tanto una clave publishable moderna como una anon legada. Las claves modernas se envían solo en `apikey`; las sesiones autenticadas agregan su JWT en `Authorization`. El widget Turnstile debe admitir el dominio real. Usar `npm ci --ignore-scripts` y `npm run build`; la salida es `dist/`. Hay que recompilar tras cambiar variables públicas. La configuración de demostración no guarda datos ni crea usuarios, aunque se suba el sitio a un dominio real.
 
 Conservar los encabezados de `public/_headers`, especialmente CSP, `no-store` en rutas privadas y la política de referencias. El alojamiento de Workers debe aplicar esos encabezados; comprobarlo tras publicar. El contenido sensible de las API también usa `Cache-Control: no-store`. La PWA solo guarda recursos públicos y su versión cambia al publicar este rediseño.
 

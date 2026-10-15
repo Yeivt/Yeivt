@@ -1,5 +1,5 @@
 import { HttpError, jsonResponse, readBody, requireOrigin } from './domain.ts';
-import { env, rest } from './platform.ts';
+import { apiHeaders, env, rest, serviceKey } from './platform.ts';
 
 export function username(value: unknown): string {
   const name = typeof value === 'string' ? value.toLowerCase() : '';
@@ -36,9 +36,9 @@ export async function rateKey(request: Request,scope: string): Promise<string> {
   return Array.from(new Uint8Array(await crypto.subtle.sign('HMAC',key,new TextEncoder().encode(`${scope}:${ip}`))),b=>b.toString(16).padStart(2,'0')).join('');
 }
 async function auth(path: string,method: string,body?: unknown): Promise<any> {
-  const key=env('SUPABASE_SERVICE_ROLE_KEY');
+  const key=serviceKey();
   const response=await fetch(`${env('SUPABASE_URL')}/auth/v1/${path}`,{
-    method,headers:{apikey:key,Authorization:`Bearer ${key}`,'Content-Type':'application/json'},
+    method,headers:{...apiHeaders(key),'Content-Type':'application/json'},
     body:body===undefined?undefined:JSON.stringify(body),signal:AbortSignal.timeout(15000),
   });
   if(!response.ok) {

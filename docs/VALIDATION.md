@@ -10,7 +10,7 @@ CHROMIUM_PATH=/usr/bin/chromium npm run test:e2e
 ```
 
 - Astro y TypeScript del sitio y las funciones: sin errores ni advertencias.
-- 20 casos de servidor, PostgreSQL embebido y metadatos de fotos: aprobados (9 de servidor, 9 de base y 2 de fotos).
+- 21 casos de servidor, PostgreSQL embebido y metadatos de fotos: aprobados (10 de servidor, 9 de base y 2 de fotos).
 - Compilación estática de 15 páginas: aprobada.
 - 11 pruebas de Chromium: aprobadas. Vista en 320, 390, 768 y 1440px, formulario sin correo, consentimiento, solapas con teclado, lectura y relectura sin duplicar contador, filtros, registro no enlazado, usuarios sin espacios, recuperación y oraciones offline.
 - Revisión visual en escritorio y móvil, sin errores de JavaScript en el recorrido de captura.
